@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -56,21 +57,6 @@ const statusColors: Record<string, string> = {
     "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300",
 };
 
-const statusLabels: Record<string, string> = {
-  active: "Active",
-  paused: "Paused",
-  completed: "Finished",
-};
-
-const frequencyLabels: Record<string, string> = {
-  weekly: "Weekly",
-  fortnightly: "Fortnightly",
-  monthly: "Monthly",
-  quarterly: "Quarterly",
-  semi_annual: "Semi-Annual",
-  annual: "Annual",
-};
-
 const emptyLine = (): LineItem => ({
   description: "",
   quantity: "1",
@@ -79,10 +65,12 @@ const emptyLine = (): LineItem => ({
 });
 
 export default function RecurringBillsPage() {
+  const t = useTranslations("Purchases.RecurringBills");
+  const format = useFormatter();
   const [templates, setTemplates] = useState<RecurringTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useDocumentTitle("Purchases · Recurring Bills");
+  useDocumentTitle(t("pageTitle"));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -189,11 +177,10 @@ export default function RecurringBillsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold tracking-tight">
-            Recurring Bills
+            {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Set up supplier bills that get created automatically on a schedule,
-            so you never have to re-key the same monthly bill.
+            {t("description")}
           </p>
         </div>
         <Button
@@ -201,7 +188,7 @@ export default function RecurringBillsPage() {
           className="bg-emerald-600 hover:bg-emerald-700"
         >
           <Plus className="mr-2 size-4" />
-          New Recurring Bill
+          {t("newRecurringBill")}
         </Button>
       </div>
 
@@ -209,11 +196,11 @@ export default function RecurringBillsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Frequency</TableHead>
-              <TableHead>Next Bill</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t("name")}</TableHead>
+              <TableHead>{t("supplier")}</TableHead>
+              <TableHead>{t("frequency")}</TableHead>
+              <TableHead>{t("nextBill")}</TableHead>
+              <TableHead>{t("status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -223,7 +210,7 @@ export default function RecurringBillsPage() {
                   colSpan={5}
                   className="text-center py-8 text-sm text-muted-foreground"
                 >
-                  Loading...
+                  {t("loading")}
                 </TableCell>
               </TableRow>
             ) : templates.length === 0 ? (
@@ -232,30 +219,30 @@ export default function RecurringBillsPage() {
                   colSpan={5}
                   className="text-center py-8 text-sm text-muted-foreground"
                 >
-                  No recurring bills yet. Create one to get started.
+                  {t("empty")}
                 </TableCell>
               </TableRow>
             ) : (
-              templates.map((t) => (
-                <TableRow key={t.id}>
+              templates.map((template) => (
+                <TableRow key={template.id}>
                   <TableCell className="text-sm font-medium">
-                    {t.name}
+                    {template.name}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {t.contact?.name || "-"}
+                    {template.contact?.name || "-"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {frequencyLabels[t.frequency] || t.frequency}
+                    {t(`frequencies.${template.frequency}`)}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {t.nextRunDate || "-"}
+                    {template.nextRunDate ? format.dateTime(new Date(`${template.nextRunDate}T12:00:00`), { dateStyle: "medium" }) : "-"}
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={statusColors[t.status] || ""}
+                      className={statusColors[template.status] || ""}
                     >
-                      {statusLabels[t.status] || t.status}
+                      {t(`statuses.${template.status}`)}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -268,58 +255,58 @@ export default function RecurringBillsPage() {
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent className="sm:max-w-lg w-full p-0 flex flex-col overflow-y-auto">
           <SheetHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-4 border-b">
-            <SheetTitle>New Recurring Bill</SheetTitle>
+            <SheetTitle>{t("newRecurringBill")}</SheetTitle>
           </SheetHeader>
 
           <div className="px-4 pb-6 pt-4 sm:px-6 space-y-4 flex-1 overflow-y-auto">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
+              <label className="text-sm font-medium">{t("name")}</label>
               <Input
-                placeholder="e.g. Monthly Software Subscription"
+                placeholder={t("namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Supplier</label>
+              <label className="text-sm font-medium">{t("supplier")}</label>
               <ContactPicker
                 value={contactId}
                 onChange={setContactId}
                 type="supplier"
-                placeholder="Select supplier..."
+                placeholder={t("selectSupplier")}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Reference</label>
+              <label className="text-sm font-medium">{t("reference")}</label>
               <Input
-                placeholder="Optional bill reference"
+                placeholder={t("billReference")}
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Frequency</label>
+              <label className="text-sm font-medium">{t("frequency")}</label>
               <Select value={frequency} onValueChange={setFrequency}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="fortnightly">Fortnightly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="semi_annual">Semi-Annual</SelectItem>
-                  <SelectItem value="annual">Annual</SelectItem>
+                  <SelectItem value="weekly">{t("frequencies.weekly")}</SelectItem>
+                  <SelectItem value="fortnightly">{t("frequencies.fortnightly")}</SelectItem>
+                  <SelectItem value="monthly">{t("frequencies.monthly")}</SelectItem>
+                  <SelectItem value="quarterly">{t("frequencies.quarterly")}</SelectItem>
+                  <SelectItem value="semi_annual">{t("frequencies.semiAnnual")}</SelectItem>
+                  <SelectItem value="annual">{t("frequencies.annual")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Start Date</label>
+                <label className="text-sm font-medium">{t("startDate")}</label>
                 <Input
                   type="date"
                   value={startDate}
@@ -327,7 +314,7 @@ export default function RecurringBillsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">End Date</label>
+                <label className="text-sm font-medium">{t("endDate")}</label>
                 <Input
                   type="date"
                   value={endDate}
@@ -337,11 +324,11 @@ export default function RecurringBillsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Max Occurrences</label>
+              <label className="text-sm font-medium">{t("maxOccurrences")}</label>
               <Input
                 type="number"
                 min="1"
-                placeholder="Unlimited"
+                placeholder={t("unlimited")}
                 value={maxOccurrences}
                 onChange={(e) => setMaxOccurrences(e.target.value)}
               />
@@ -349,7 +336,7 @@ export default function RecurringBillsPage() {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Line Items</label>
+                <label className="text-sm font-medium">{t("lineItems")}</label>
                 <Button
                   type="button"
                   variant="ghost"
@@ -357,7 +344,7 @@ export default function RecurringBillsPage() {
                   onClick={() => setLines((prev) => [...prev, emptyLine()])}
                 >
                   <Plus className="mr-1 size-3" />
-                  Add Line
+                  {t("addLine")}
                 </Button>
               </div>
 
@@ -365,7 +352,7 @@ export default function RecurringBillsPage() {
                 <div key={i} className="flex items-start gap-2">
                   <div className="flex-1 space-y-2">
                     <Input
-                      placeholder="Description"
+                      placeholder={t("descriptionField")}
                       value={line.description}
                       onChange={(e) =>
                         updateLine(i, "description", e.target.value)
@@ -375,7 +362,7 @@ export default function RecurringBillsPage() {
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="Qty"
+                        placeholder={t("quantity")}
                         value={line.quantity}
                         onChange={(e) =>
                           updateLine(i, "quantity", e.target.value)
@@ -384,7 +371,7 @@ export default function RecurringBillsPage() {
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="Unit price"
+                        placeholder={t("unitPrice")}
                         value={line.unitPrice}
                         onChange={(e) =>
                           updateLine(i, "unitPrice", e.target.value)
@@ -394,7 +381,7 @@ export default function RecurringBillsPage() {
                         value={line.accountId || ""}
                         onChange={(v) => updateLine(i, "accountId", v)}
                         typeFilter={["expense"]}
-                        placeholder="Account..."
+                        placeholder={t("account")}
                       />
                     </div>
                   </div>
@@ -418,7 +405,7 @@ export default function RecurringBillsPage() {
               onClick={handleSubmit}
               disabled={submitting || !name || !contactId || !startDate}
             >
-              {submitting ? "Creating..." : "Create Recurring Bill"}
+              {submitting ? t("creating") : t("createRecurringBill")}
             </Button>
           </div>
         </SheetContent>
