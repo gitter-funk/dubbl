@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 import {
@@ -70,11 +71,15 @@ const statusColors: Record<string, string> = {
     "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
 };
 
-function buildColumns(): Column<Requisition>[] {
+function parseDateForDisplay(value: string): Date {
+  return new Date(value.length === 10 ? `${value}T12:00:00` : value);
+}
+
+function buildColumns(t: ReturnType<typeof useTranslations<"Purchases.Requisitions">>, formatDate: (date: Date) => string): Column<Requisition>[] {
   return [
     {
       key: "number",
-      header: "Number",
+      header: t("number"),
       sortKey: "number",
       className: "w-32",
       render: (r) => (
@@ -83,7 +88,7 @@ function buildColumns(): Column<Requisition>[] {
     },
     {
       key: "contact",
-      header: "Supplier",
+      header: t("supplier"),
       render: (r) => (
         <span className="text-sm font-medium">
           {r.contact?.name || "-"}
@@ -92,24 +97,24 @@ function buildColumns(): Column<Requisition>[] {
     },
     {
       key: "date",
-      header: "Request Date",
+      header: t("requestDate"),
       sortKey: "date",
       className: "w-28",
-      render: (r) => <span className="text-sm">{r.requestDate}</span>,
+      render: (r) => <span className="text-sm">{formatDate(parseDateForDisplay(r.requestDate))}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: t("status"),
       className: "w-28",
       render: (r) => (
         <Badge variant="outline" className={statusColors[r.status] || ""}>
-          {r.status}
+          {t(`statuses.${r.status}`)}
         </Badge>
       ),
     },
     {
       key: "total",
-      header: "Total",
+      header: t("total"),
       sortKey: "total",
       className: "w-28 text-right",
       render: (r) => (
@@ -128,6 +133,8 @@ const emptyLine = (): LineInput => ({
 });
 
 export default function RequisitionsPage() {
+  const t = useTranslations("Purchases.Requisitions");
+  const format = useFormatter();
   const router = useRouter();
   const [items, setItems] = useState<Requisition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,9 +169,9 @@ export default function RequisitionsPage() {
       ? localStorage.getItem("activeOrgId")
       : null;
 
-  useDocumentTitle("Purchases · Requisitions");
+  useDocumentTitle(t("pageTitle"));
 
-  const columns = useMemo(() => buildColumns(), []);
+  const columns = useMemo(() => buildColumns(t, (date) => format.dateTime(date, { dateStyle: "medium" })), [t, format]);
 
   const buildParams = useCallback(
     (pg: number) => {
@@ -288,7 +295,7 @@ export default function RequisitionsPage() {
     if (!orgId) return;
     const validLines = formLines.filter((l) => l.description.trim());
     if (validLines.length === 0) {
-      toast.error("Add at least one line item");
+      toast.error(t("addLineRequired"));
       return;
     }
 
@@ -310,7 +317,7 @@ export default function RequisitionsPage() {
       });
 
       if (res.ok) {
-        toast.success("Requisition created");
+        toast.success(t("created"));
         setSheetOpen(false);
         resetForm();
         // Refresh
@@ -327,11 +334,10 @@ export default function RequisitionsPage() {
         }
         setLoading(false);
       } else {
-        const err = await res.json();
-        toast.error(err.error || "Failed to create");
+        toast.error(t("createFailed"));
       }
     } catch {
-      toast.error("Failed to create requisition");
+      toast.error(t("createFailed"));
     } finally {
       setCreating(false);
     }
@@ -360,32 +366,32 @@ export default function RequisitionsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-0 rounded-lg border overflow-hidden mb-8">
             {[
               {
-                label: "Draft",
-                desc: "Create requisition",
+                label: t("statuses.draft"),
+                desc: t("steps.draft"),
                 color: "bg-gray-400",
                 bg: "bg-gray-50 dark:bg-gray-900/30",
               },
               {
-                label: "Submitted",
-                desc: "Submit for approval",
+                label: t("statuses.submitted"),
+                desc: t("steps.submitted"),
                 color: "bg-blue-500",
                 bg: "bg-blue-50 dark:bg-blue-900/20",
               },
               {
-                label: "Approved",
-                desc: "Manager approves",
+                label: t("statuses.approved"),
+                desc: t("steps.approved"),
                 color: "bg-emerald-500",
                 bg: "bg-emerald-50 dark:bg-emerald-900/20",
               },
               {
-                label: "Rejected",
-                desc: "Request denied",
+                label: t("statuses.rejected"),
+                desc: t("steps.rejected"),
                 color: "bg-red-500",
                 bg: "bg-red-50 dark:bg-red-900/20",
               },
               {
-                label: "Converted",
-                desc: "Becomes a PO",
+                label: t("statuses.converted"),
+                desc: t("steps.converted"),
                 color: "bg-purple-500",
                 bg: "bg-purple-50 dark:bg-purple-900/20",
               },
@@ -443,10 +449,10 @@ export default function RequisitionsPage() {
                     }`}
                   >
                     {i % 3 === 0
-                      ? "submitted"
+                      ? t("statuses.submitted")
                       : i % 3 === 1
-                        ? "approved"
-                        : "converted"}
+                        ? t("statuses.approved")
+                        : t("statuses.converted")}
                   </div>
                   <div
                     className={`h-2.5 rounded bg-muted/40 ${i % 2 === 0 ? "w-16" : "w-14"}`}
@@ -461,11 +467,10 @@ export default function RequisitionsPage() {
                 <ClipboardCheck className="size-7 text-purple-600 dark:text-purple-400" />
               </div>
               <h2 className="mt-5 text-xl font-semibold tracking-tight">
-                No purchase requisitions yet
+                {t("emptyTitle")}
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
-                Create purchase requisitions to request purchases that require
-                approval before ordering.
+                {t("emptyDescription")}
               </p>
               <Button
                 onClick={() => setSheetOpen(true)}
@@ -473,7 +478,7 @@ export default function RequisitionsPage() {
                 className="mt-6 bg-emerald-600 hover:bg-emerald-700"
               >
                 <Plus className="mr-2 size-4" />
-                New Requisition
+                {t("newRequisition")}
               </Button>
             </div>
           </div>
@@ -489,12 +494,12 @@ export default function RequisitionsPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="max-h-[85vh]">
           <SheetHeader>
-            <SheetTitle>New Purchase Requisition</SheetTitle>
+            <SheetTitle>{t("newRequisition")}</SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto px-4 pb-6 space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs">Request Date</Label>
+                <Label className="text-xs">{t("requestDate")}</Label>
                 <Input
                   type="date"
                   value={formRequestDate}
@@ -502,7 +507,7 @@ export default function RequisitionsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Required By</Label>
+                <Label className="text-xs">{t("requiredBy")}</Label>
                 <Input
                   type="date"
                   value={formRequiredDate}
@@ -512,27 +517,27 @@ export default function RequisitionsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Reference</Label>
+              <Label className="text-xs">{t("reference")}</Label>
               <Input
                 value={formReference}
                 onChange={(e) => setFormReference(e.target.value)}
-                placeholder="Optional reference"
+                placeholder={t("optionalReference")}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Notes</Label>
+              <Label className="text-xs">{t("notes")}</Label>
               <Textarea
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
-                placeholder="Optional notes"
+                placeholder={t("optionalNotes")}
                 rows={2}
               />
             </div>
 
             {/* Line items */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Line Items</Label>
+              <Label className="text-xs font-medium">{t("lineItems")}</Label>
               {formLines.map((line, idx) => (
                 <div
                   key={idx}
@@ -540,7 +545,7 @@ export default function RequisitionsPage() {
                 >
                   <div className="flex-1 space-y-2">
                     <Input
-                      placeholder="Description"
+                      placeholder={t("descriptionField")}
                       value={line.description}
                       onChange={(e) =>
                         updateLine(idx, "description", e.target.value)
@@ -549,7 +554,7 @@ export default function RequisitionsPage() {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[10px] text-muted-foreground">
-                          Qty
+                          {t("quantity")}
                         </Label>
                         <Input
                           type="number"
@@ -566,7 +571,7 @@ export default function RequisitionsPage() {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] text-muted-foreground">
-                          Unit Price
+                          {t("unitPrice")}
                         </Label>
                         <Input
                           type="number"
@@ -605,7 +610,7 @@ export default function RequisitionsPage() {
                 }
               >
                 <Plus className="mr-2 size-3.5" />
-                Add Line
+                {t("addLine")}
               </Button>
             </div>
 
@@ -619,7 +624,7 @@ export default function RequisitionsPage() {
               ) : (
                 <Plus className="mr-2 size-4" />
               )}
-              Create Requisition
+              {t("createRequisition")}
             </Button>
           </div>
         </SheetContent>
@@ -632,8 +637,8 @@ export default function RequisitionsPage() {
       <div className="space-y-3 sm:space-y-6">
         {/* Header */}
         <PageHeader
-          title="Purchase Requisitions"
-          description="Request and approve purchases before ordering."
+          title={t("title")}
+          description={t("description")}
         >
           <Button
             size="sm"
@@ -641,7 +646,7 @@ export default function RequisitionsPage() {
             className="bg-emerald-600 hover:bg-emerald-700"
           >
             <Plus className="mr-2 size-4" />
-            New Requisition
+            {t("newRequisition")}
           </Button>
         </PageHeader>
 
@@ -653,22 +658,22 @@ export default function RequisitionsPage() {
             <Tabs value={statusFilter} onValueChange={setStatusFilter}>
               <TabsList>
                 <TabsTrigger value="all" className="whitespace-nowrap">
-                  All ({totalCount})
+                  {t("allCount", { count: totalCount })}
                 </TabsTrigger>
                 <TabsTrigger value="draft" className="whitespace-nowrap">
-                  Draft
+                  {t("statuses.draft")}
                 </TabsTrigger>
                 <TabsTrigger value="submitted" className="whitespace-nowrap">
-                  Submitted
+                  {t("statuses.submitted")}
                 </TabsTrigger>
                 <TabsTrigger value="approved" className="whitespace-nowrap">
-                  Approved
+                  {t("statuses.approved")}
                 </TabsTrigger>
                 <TabsTrigger value="rejected" className="whitespace-nowrap">
-                  Rejected
+                  {t("statuses.rejected")}
                 </TabsTrigger>
                 <TabsTrigger value="converted" className="whitespace-nowrap">
-                  Converted
+                  {t("statuses.converted")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -676,7 +681,7 @@ export default function RequisitionsPage() {
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search requisitions..."
+              placeholder={t("search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -688,21 +693,21 @@ export default function RequisitionsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground shrink-0">
-              From
+              {t("from")}
             </span>
             <DatePicker
               value={dateFrom}
               onChange={(v) => setDateFrom(v)}
-              placeholder="Start date"
+              placeholder={t("startDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">To</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t("to")}</span>
             <DatePicker
               value={dateTo}
               onChange={(v) => setDateTo(v)}
-              placeholder="End date"
+              placeholder={t("endDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
@@ -715,15 +720,15 @@ export default function RequisitionsPage() {
             }}
           >
             <SelectTrigger className="h-8 w-44 text-xs">
-              <SelectValue placeholder="Sort by..." />
+              <SelectValue placeholder={t("sortBy")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="created:desc">Newest first</SelectItem>
-              <SelectItem value="created:asc">Oldest first</SelectItem>
-              <SelectItem value="total:desc">Highest amount</SelectItem>
-              <SelectItem value="total:asc">Lowest amount</SelectItem>
-              <SelectItem value="number:asc">Number (A-Z)</SelectItem>
-              <SelectItem value="number:desc">Number (Z-A)</SelectItem>
+              <SelectItem value="created:desc">{t("newestFirst")}</SelectItem>
+              <SelectItem value="created:asc">{t("oldestFirst")}</SelectItem>
+              <SelectItem value="total:desc">{t("highestAmount")}</SelectItem>
+              <SelectItem value="total:asc">{t("lowestAmount")}</SelectItem>
+              <SelectItem value="number:asc">{t("numberAsc")}</SelectItem>
+              <SelectItem value="number:desc">{t("numberDesc")}</SelectItem>
             </SelectContent>
           </Select>
           {hasFilters && (
@@ -737,7 +742,7 @@ export default function RequisitionsPage() {
               }}
             >
               <X className="mr-1 size-3" />
-              Clear dates
+              {t("clearDates")}
             </Button>
           )}
         </div>
@@ -762,7 +767,7 @@ export default function RequisitionsPage() {
                 columns={columns}
                 data={items}
                 loading={loading}
-                emptyMessage="No requisitions match your filters."
+                emptyMessage={t("noRequisitionsMatch")}
                 onRowClick={(r) =>
                   router.push(`/purchases/requisitions/${r.id}`)
                 }

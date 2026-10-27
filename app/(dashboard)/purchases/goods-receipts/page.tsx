@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 import { PackageCheck, Truck, X, Search, Loader2, ArrowRight } from "lucide-react";
@@ -17,6 +18,9 @@ import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { BrandLoader } from "@/components/dashboard/brand-loader";
 import { ContentReveal } from "@/components/ui/content-reveal";
 import Link from "next/link";
+
+const EXAMPLE_PO_NUMBER = "PO-0042";
+const EXAMPLE_RECEIPT_NUMBER = "GRN-0001";
 
 interface GoodsReceiptLine {
   quantityReceived: number;
@@ -42,24 +46,21 @@ const statusColors: Record<string, string> = {
 };
 
 // Plain-language status labels (end users aren't accountants).
-const statusLabels: Record<string, string> = {
-  draft: "draft",
-  received: "received",
-  billed: "billed",
-  void: "cancelled",
-};
-
 // Total value of goods received: sum of (qty received / 100) * unit cost per line.
 function receivedValue(r: GoodsReceipt): number {
   if (!r.lines) return 0;
   return r.lines.reduce((sum, l) => sum + (l.quantityReceived / 100) * l.unitCost, 0);
 }
 
-function buildColumns(): Column<GoodsReceipt>[] {
+function parseDateForDisplay(value: string): Date {
+  return new Date(value.length === 10 ? `${value}T12:00:00` : value);
+}
+
+function buildColumns(t: ReturnType<typeof useTranslations<"Purchases.GoodsReceipts">>, formatDate: (date: Date) => string): Column<GoodsReceipt>[] {
   return [
     {
       key: "number",
-      header: "Number",
+      header: t("number"),
       sortKey: "number",
       className: "w-32",
       render: (r) => (
@@ -68,31 +69,31 @@ function buildColumns(): Column<GoodsReceipt>[] {
     },
     {
       key: "contact",
-      header: "Supplier",
+      header: t("supplier"),
       render: (r) => (
         <span className="text-sm font-medium">{r.contact?.name || "-"}</span>
       ),
     },
     {
       key: "date",
-      header: "Date",
+      header: t("date"),
       sortKey: "date",
       className: "w-28",
-      render: (r) => <span className="text-sm">{r.date}</span>,
+      render: (r) => <span className="text-sm">{formatDate(parseDateForDisplay(r.date))}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: t("status"),
       className: "w-24",
       render: (r) => (
         <Badge variant="outline" className={statusColors[r.status] || ""}>
-          {statusLabels[r.status] || r.status}
+          {t(`statuses.${r.status}`)}
         </Badge>
       ),
     },
     {
       key: "value",
-      header: "Value received",
+      header: t("valueReceived"),
       className: "w-32 text-right",
       render: (r) => (
         <span className="font-mono text-sm tabular-nums">
@@ -104,6 +105,8 @@ function buildColumns(): Column<GoodsReceipt>[] {
 }
 
 export default function GoodsReceiptsPage() {
+  const t = useTranslations("Purchases.GoodsReceipts");
+  const format = useFormatter();
   const router = useRouter();
   const [receipts, setReceipts] = useState<GoodsReceipt[]>([]);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -118,7 +121,7 @@ export default function GoodsReceiptsPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
 
-  useDocumentTitle("Purchases · Goods Received");
+  useDocumentTitle(t("pageTitle"));
 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -126,7 +129,7 @@ export default function GoodsReceiptsPage() {
   const PAGE_SIZE = 50;
   const orgId = typeof window !== "undefined" ? localStorage.getItem("activeOrgId") : null;
 
-  const columns = useMemo(() => buildColumns(), []);
+  const columns = useMemo(() => buildColumns(t, (date) => format.dateTime(date, { dateStyle: "medium" })), [t, format]);
 
   const buildParams = useCallback((p: number) => {
     const params = new URLSearchParams();
@@ -245,14 +248,14 @@ export default function GoodsReceiptsPage() {
           {/* Top: title + hint (no "new" — goods are received from a purchase order) */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">Goods Received</h2>
+              <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
               <p className="mt-1 text-sm text-muted-foreground max-w-md">
-                The stock you&apos;ve received from suppliers against a purchase order. Record what arrived so your inventory stays accurate.
+                {t("emptyDescription")}
               </p>
             </div>
             <Button variant="outline" asChild className="shrink-0">
               <Link href="/purchases/orders">
-                Go to purchase orders
+                {t("goToOrders")}
                 <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
@@ -262,7 +265,7 @@ export default function GoodsReceiptsPage() {
             {/* Left: how it works */}
             <div className="rounded-xl border bg-card overflow-hidden">
               <div className="bg-muted/30 px-3 sm:px-5 py-3 border-b">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">How receiving goods works</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("howItWorks")}</p>
               </div>
               <div className="divide-y">
                 <div className="flex items-center justify-between px-3 sm:px-5 py-3.5">
@@ -271,8 +274,8 @@ export default function GoodsReceiptsPage() {
                       <Truck className="size-3.5 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Order placed</p>
-                      <p className="text-[11px] text-muted-foreground">PO-0042</p>
+                      <p className="text-sm font-medium">{t("orderPlaced")}</p>
+                      <p className="text-[11px] text-muted-foreground">{EXAMPLE_PO_NUMBER}</p>
                     </div>
                   </div>
                   <span className="font-mono text-sm font-medium">$1,200.00</span>
@@ -283,8 +286,8 @@ export default function GoodsReceiptsPage() {
                       <PackageCheck className="size-3.5 text-emerald-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Goods received</p>
-                      <p className="text-[11px] text-muted-foreground">GRN-0001</p>
+                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{t("goodsReceived")}</p>
+                      <p className="text-[11px] text-muted-foreground">{EXAMPLE_RECEIPT_NUMBER}</p>
                     </div>
                   </div>
                   <span className="font-mono text-sm font-medium text-emerald-600 dark:text-emerald-400">+$1,200.00</span>
@@ -292,35 +295,35 @@ export default function GoodsReceiptsPage() {
                 <div className="flex items-center justify-between px-3 sm:px-5 py-3.5">
                   <div className="flex items-center gap-3">
                     <div className="size-7" />
-                    <p className="text-sm font-semibold">Stock on hand</p>
+                    <p className="text-sm font-semibold">{t("stockOnHand")}</p>
                   </div>
-                  <span className="font-mono text-sm font-bold">Updated</span>
+                  <span className="font-mono text-sm font-bold">{t("updated")}</span>
                 </div>
               </div>
             </div>
 
             {/* Right: how to record one */}
             <div className="space-y-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">How to record goods you&apos;ve received</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("howToRecord")}</p>
               {[
                 {
-                  title: "Open the purchase order",
-                  desc: "Goods are always received against an order you sent to a supplier — start there.",
+                  title: t("steps.openOrder"),
+                  desc: t("steps.openOrderHelp"),
                   color: "border-l-blue-400",
                 },
                 {
-                  title: "Mark what arrived",
-                  desc: "Enter the quantity received for each item — receive it all at once or in part deliveries.",
+                  title: t("steps.markReceived"),
+                  desc: t("steps.markReceivedHelp"),
                   color: "border-l-emerald-400",
                 },
                 {
-                  title: "Stock updates automatically",
-                  desc: "Received items are added to your inventory on hand straight away.",
+                  title: t("steps.stockUpdates"),
+                  desc: t("steps.stockUpdatesHelp"),
                   color: "border-l-amber-400",
                 },
                 {
-                  title: "Bill it later",
-                  desc: "When the supplier's invoice arrives, create a bill from the same order.",
+                  title: t("steps.billLater"),
+                  desc: t("steps.billLaterHelp"),
                   color: "border-l-purple-400",
                 },
               ].map(({ title, desc, color }) => (
@@ -340,8 +343,8 @@ export default function GoodsReceiptsPage() {
     <ContentReveal className="space-y-6">
       {/* Top: Stats */}
       <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard title="Value received" value={formatMoney(Math.round(totalValue))} icon={PackageCheck} />
-        <StatCard title="Receipts" value={totalCount.toString()} icon={Truck} />
+        <StatCard title={t("valueReceived")} value={formatMoney(Math.round(totalValue))} icon={PackageCheck} />
+        <StatCard title={t("receipts")} value={totalCount.toString()} icon={Truck} />
       </div>
 
       <div className="h-px bg-border" />
@@ -351,19 +354,19 @@ export default function GoodsReceiptsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Tabs value={statusFilter} onValueChange={setStatusFilter}>
             <TabsList className="overflow-x-auto">
-              <TabsTrigger value="all" className="whitespace-nowrap">All</TabsTrigger>
-              <TabsTrigger value="received" className="whitespace-nowrap">Received</TabsTrigger>
-              <TabsTrigger value="billed" className="whitespace-nowrap" title="Goods you've received and have since been billed for">Billed</TabsTrigger>
-              <TabsTrigger value="void" className="whitespace-nowrap">Cancelled</TabsTrigger>
+              <TabsTrigger value="all" className="whitespace-nowrap">{t("all")}</TabsTrigger>
+              <TabsTrigger value="received" className="whitespace-nowrap">{t("statuses.received")}</TabsTrigger>
+              <TabsTrigger value="billed" className="whitespace-nowrap" title={t("billedHelp")}>{t("statuses.billed")}</TabsTrigger>
+              <TabsTrigger value="void" className="whitespace-nowrap">{t("statuses.void")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
           {/* Goods are received from a purchase order — no "new" here. */}
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
             <Truck className="size-3.5 shrink-0" />
-            Received from a{" "}
+            {t("receivedFrom")} {" "}
             <Link href="/purchases/orders" className="underline underline-offset-2 hover:text-foreground">
-              purchase order
+              {t("purchaseOrder")}
             </Link>
           </p>
         </div>
@@ -372,27 +375,27 @@ export default function GoodsReceiptsPage() {
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search goods received..."
+              placeholder={t("search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 w-56 pl-8 text-xs"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">From</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t("from")}</span>
             <DatePicker
               value={dateFrom}
               onChange={(v) => setDateFrom(v)}
-              placeholder="Start date"
+              placeholder={t("startDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">To</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t("to")}</span>
             <DatePicker
               value={dateTo}
               onChange={(v) => setDateTo(v)}
-              placeholder="End date"
+              placeholder={t("endDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
@@ -404,7 +407,7 @@ export default function GoodsReceiptsPage() {
               onClick={() => { setSearch(""); setDateFrom(""); setDateTo(""); }}
             >
               <X className="mr-1 size-3" />
-              Clear filters
+              {t("clearFilters")}
             </Button>
           )}
         </div>
@@ -417,7 +420,7 @@ export default function GoodsReceiptsPage() {
               columns={columns}
               data={filteredReceipts}
               loading={false}
-              emptyMessage="No goods received match your filters."
+              emptyMessage={t("noReceiptsMatch")}
               onRowClick={(r) => router.push(`/purchases/goods-receipts/${r.id}`)}
               sortBy={sortBy}
               sortOrder={sortOrder}
@@ -431,7 +434,7 @@ export default function GoodsReceiptsPage() {
           <>
             <div className="flex items-center justify-between pt-1">
               <p className="text-xs text-muted-foreground">
-                Showing {receipts.length} of {totalCount} receipt{totalCount !== 1 ? "s" : ""}
+                {t("showingReceipts", { shown: receipts.length, total: totalCount })}
               </p>
             </div>
             {hasMore && (

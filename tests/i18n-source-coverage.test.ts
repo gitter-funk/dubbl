@@ -21,6 +21,12 @@ const localizedSources = [
   "app/(dashboard)/tax/page.tsx",
   "app/(dashboard)/tax/layout.tsx",
   "app/(dashboard)/tax/periods/page.tsx",
+  "app/(dashboard)/purchases/layout.tsx",
+  "app/(dashboard)/purchases/page.tsx",
+  "app/(dashboard)/purchases/expenses/page.tsx",
+  "app/(dashboard)/purchases/orders/page.tsx",
+  "app/(dashboard)/purchases/requisitions/page.tsx",
+  "app/(dashboard)/purchases/goods-receipts/page.tsx",
 ];
 
 function visibleLiteralStrings(sourcePath: string): string[] {
@@ -107,7 +113,7 @@ function missingMessageKeys(sourcePath: string): string[] {
   });
 }
 
-test("localized settings and tax sources keep visible copy in message catalogs", () => {
+test("localized settings, tax, and purchases sources keep visible copy in message catalogs", () => {
   const failures = localizedSources.flatMap((source) => {
     const literals = visibleLiteralStrings(source);
     const missingKeys = missingMessageKeys(source);
@@ -121,6 +127,6 @@ test("localized settings and tax sources keep visible copy in message catalogs",
   assert.deepEqual(
     failures,
     [],
-    `Move newly added visible copy in these localized settings and tax sources to messages/*.json:\n${failures.join("\n")}`
+    `Move newly added visible copy in these localized sources to messages/*.json:\n${failures.join("\n")}`
   );
 });

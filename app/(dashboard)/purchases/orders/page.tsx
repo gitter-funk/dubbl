@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 import {
@@ -56,57 +57,52 @@ const statusColors: Record<string, string> = {
 };
 
 // Plain-language status labels (end users aren't accountants).
-const statusLabels: Record<string, string> = {
-  draft: "draft",
-  sent: "ordered",
-  partial: "some items in",
-  received: "all items in",
-  closed: "fully billed",
-  void: "cancelled",
-};
+function parseDateForDisplay(value: string): Date {
+  return new Date(value.length === 10 ? `${value}T12:00:00` : value);
+}
 
-function buildColumns(): Column<PO>[] {
+function buildColumns(t: ReturnType<typeof useTranslations<"Purchases.Orders">>, formatDate: (date: Date) => string): Column<PO>[] {
   return [
     {
       key: "number",
-      header: "Number",
+      header: t("number"),
       sortKey: "number",
       className: "w-32",
       render: (r) => <span className="font-mono text-sm">{r.poNumber}</span>,
     },
     {
       key: "contact",
-      header: "Supplier",
+      header: t("supplier"),
       render: (r) => (
         <span className="text-sm font-medium">{r.contact?.name || "-"}</span>
       ),
     },
     {
       key: "date",
-      header: "Date",
+      header: t("date"),
       sortKey: "date",
       className: "w-28",
-      render: (r) => <span className="text-sm">{r.issueDate}</span>,
+      render: (r) => <span className="text-sm">{formatDate(parseDateForDisplay(r.issueDate))}</span>,
     },
     {
       key: "delivery",
-      header: "Delivery",
+      header: t("delivery"),
       className: "w-28",
-      render: (r) => <span className="text-sm">{r.deliveryDate || "-"}</span>,
+      render: (r) => <span className="text-sm">{r.deliveryDate ? formatDate(parseDateForDisplay(r.deliveryDate)) : "-"}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: t("status"),
       className: "w-24",
       render: (r) => (
         <Badge variant="outline" className={statusColors[r.status] || ""}>
-          {statusLabels[r.status] || r.status}
+          {t(`statuses.${r.status}`)}
         </Badge>
       ),
     },
     {
       key: "total",
-      header: "Total",
+      header: t("total"),
       sortKey: "total",
       className: "w-28 text-right",
       render: (r) => (
@@ -119,6 +115,8 @@ function buildColumns(): Column<PO>[] {
 }
 
 export default function PurchaseOrdersPage() {
+  const t = useTranslations("Purchases.Orders");
+  const format = useFormatter();
   const router = useRouter();
   const { open: openDrawer } = useCreateDrawer();
   const [pos, setPos] = useState<PO[]>([]);
@@ -140,9 +138,9 @@ export default function PurchaseOrdersPage() {
 
   const orgId = typeof window !== "undefined" ? localStorage.getItem("activeOrgId") : null;
 
-  useDocumentTitle("Purchases · Purchase Orders");
+  useDocumentTitle(t("pageTitle"));
 
-  const columns = useMemo(() => buildColumns(), []);
+  const columns = useMemo(() => buildColumns(t, (date) => format.dateTime(date, { dateStyle: "medium" })), [t, format]);
 
   const buildParams = useCallback((pg: number) => {
     const params = new URLSearchParams();
@@ -264,7 +262,6 @@ export default function PurchaseOrdersPage() {
     return Object.values(countsData.counts).reduce((s, d) => s + d.amount, 0);
   }, [countsData]);
   const activeValue = (countsData?.counts.sent?.amount || 0) + (countsData?.counts.partial?.amount || 0);
-  const activeCount = (statusCounts.sent || 0) + (statusCounts.partial || 0);
 
   if (loading) return <BrandLoader />;
 
@@ -278,8 +275,8 @@ export default function PurchaseOrdersPage() {
               {
                 icon: ClipboardList,
                 step: "1",
-                label: "Create",
-                desc: "Draft a purchase order with items, quantities, and pricing",
+                label: t("steps.create"),
+                desc: t("steps.createHelp"),
                 color: "text-blue-600 dark:text-blue-400",
                 bg: "bg-blue-50 dark:bg-blue-950/40",
                 top: "bg-blue-500",
@@ -287,8 +284,8 @@ export default function PurchaseOrdersPage() {
               {
                 icon: Truck,
                 step: "2",
-                label: "Send to Supplier",
-                desc: "Send the purchase order directly to your supplier for fulfillment",
+                label: t("steps.send"),
+                desc: t("steps.sendHelp"),
                 color: "text-amber-600 dark:text-amber-400",
                 bg: "bg-amber-50 dark:bg-amber-950/40",
                 top: "bg-amber-500",
@@ -296,8 +293,8 @@ export default function PurchaseOrdersPage() {
               {
                 icon: Package,
                 step: "3",
-                label: "Receive Goods",
-                desc: "Mark items as received and track delivery against the order",
+                label: t("steps.receive"),
+                desc: t("steps.receiveHelp"),
                 color: "text-emerald-600 dark:text-emerald-400",
                 bg: "bg-emerald-50 dark:bg-emerald-950/40",
                 top: "bg-emerald-500",
@@ -336,11 +333,10 @@ export default function PurchaseOrdersPage() {
 
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
-                No purchase orders yet
+                {t("emptyTitle")}
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
-                Create purchase orders to track what you&apos;re buying from suppliers
-                and when you expect delivery.
+                {t("emptyDescription")}
               </p>
               <Button
                 onClick={() => openDrawer("purchaseOrder")}
@@ -348,7 +344,7 @@ export default function PurchaseOrdersPage() {
                 className="mt-6 bg-emerald-600 hover:bg-emerald-700"
               >
                 <Plus className="mr-2 size-4" />
-                New Purchase Order
+                {t("newOrder")}
               </Button>
             </div>
           </div>
@@ -362,8 +358,8 @@ export default function PurchaseOrdersPage() {
       <div className="space-y-3 sm:space-y-6">
         {/* Header */}
         <PageHeader
-          title="Purchase Orders"
-          description="Create and manage purchase orders for suppliers."
+          title={t("title")}
+          description={t("description")}
         >
           <Button
             size="sm"
@@ -371,14 +367,14 @@ export default function PurchaseOrdersPage() {
             className="bg-emerald-600 hover:bg-emerald-700"
           >
             <Plus className="mr-2 size-4" />
-            New purchase order
+            {t("newOrder")}
           </Button>
         </PageHeader>
 
         {/* Stats strip */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Total Value</p>
+            <p className="text-xs text-muted-foreground">{t("totalValue")}</p>
             <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight">
               {formatMoney(totalValue)}
             </p>
@@ -386,7 +382,7 @@ export default function PurchaseOrdersPage() {
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-blue-500" />
-              Active
+              {t("active")}
             </p>
             <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight text-blue-600 dark:text-blue-400">
               {formatMoney(activeValue)}
@@ -395,14 +391,14 @@ export default function PurchaseOrdersPage() {
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-emerald-500" />
-              Received
+              {t("received")}
             </p>
             <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
               {formatMoney(countsData?.counts.received?.amount || 0)}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Orders</p>
+            <p className="text-xs text-muted-foreground">{t("orders")}</p>
             <p className="text-lg sm:text-2xl font-bold tabular-nums tracking-tight">
               {countsData?.total || 0}
             </p>
@@ -416,19 +412,19 @@ export default function PurchaseOrdersPage() {
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
             <Tabs value={statusFilter} onValueChange={setStatusFilter}>
               <TabsList>
-                <TabsTrigger value="all" className="whitespace-nowrap">All ({countsData?.total || 0})</TabsTrigger>
-                <TabsTrigger value="draft" className="whitespace-nowrap">Draft ({statusCounts.draft || 0})</TabsTrigger>
-                <TabsTrigger value="sent" className="whitespace-nowrap">Ordered ({statusCounts.sent || 0})</TabsTrigger>
-                <TabsTrigger value="partial" className="whitespace-nowrap">Some items in ({statusCounts.partial || 0})</TabsTrigger>
-                <TabsTrigger value="received" className="whitespace-nowrap">All items in ({statusCounts.received || 0})</TabsTrigger>
-                <TabsTrigger value="closed" className="whitespace-nowrap" title="Fully turned into bills">Fully billed ({statusCounts.closed || 0})</TabsTrigger>
+                <TabsTrigger value="all" className="whitespace-nowrap">{t("allCount", { count: countsData?.total || 0 })}</TabsTrigger>
+                <TabsTrigger value="draft" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.draft"), count: statusCounts.draft || 0 })}</TabsTrigger>
+                <TabsTrigger value="sent" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.sent"), count: statusCounts.sent || 0 })}</TabsTrigger>
+                <TabsTrigger value="partial" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.partial"), count: statusCounts.partial || 0 })}</TabsTrigger>
+                <TabsTrigger value="received" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.received"), count: statusCounts.received || 0 })}</TabsTrigger>
+                <TabsTrigger value="closed" className="whitespace-nowrap" title={t("fullyBilledHelp")}>{t("statusCount", { status: t("statuses.closed"), count: statusCounts.closed || 0 })}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search orders..."
+              placeholder={t("search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -439,20 +435,20 @@ export default function PurchaseOrdersPage() {
         {/* Date filters + sort */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">From</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t("from")}</span>
             <DatePicker
               value={dateFrom}
               onChange={(v) => setDateFrom(v)}
-              placeholder="Start date"
+              placeholder={t("startDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">To</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t("to")}</span>
             <DatePicker
               value={dateTo}
               onChange={(v) => setDateTo(v)}
-              placeholder="End date"
+              placeholder={t("endDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
@@ -465,15 +461,15 @@ export default function PurchaseOrdersPage() {
             }}
           >
             <SelectTrigger className="h-8 w-44 text-xs">
-              <SelectValue placeholder="Sort by..." />
+              <SelectValue placeholder={t("sortBy")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="created:desc">Newest first</SelectItem>
-              <SelectItem value="created:asc">Oldest first</SelectItem>
-              <SelectItem value="total:desc">Highest amount</SelectItem>
-              <SelectItem value="total:asc">Lowest amount</SelectItem>
-              <SelectItem value="number:asc">Number (A-Z)</SelectItem>
-              <SelectItem value="number:desc">Number (Z-A)</SelectItem>
+              <SelectItem value="created:desc">{t("newestFirst")}</SelectItem>
+              <SelectItem value="created:asc">{t("oldestFirst")}</SelectItem>
+              <SelectItem value="total:desc">{t("highestAmount")}</SelectItem>
+              <SelectItem value="total:asc">{t("lowestAmount")}</SelectItem>
+              <SelectItem value="number:asc">{t("numberAsc")}</SelectItem>
+              <SelectItem value="number:desc">{t("numberDesc")}</SelectItem>
             </SelectContent>
           </Select>
           {hasFilters && (
@@ -487,7 +483,7 @@ export default function PurchaseOrdersPage() {
               }}
             >
               <X className="mr-1 size-3" />
-              Clear dates
+              {t("clearDates")}
             </Button>
           )}
         </div>
@@ -512,7 +508,7 @@ export default function PurchaseOrdersPage() {
                 columns={columns}
                 data={pos}
                 loading={loading}
-                emptyMessage="No purchase orders match your filters."
+                emptyMessage={t("noOrdersMatch")}
                 onRowClick={(r) => router.push(`/purchases/orders/${r.id}`)}
                 sortBy={sortBy}
                 sortOrder={sortOrder}
