@@ -14,7 +14,9 @@
     "General": {
       "taxIdVat": "Numéro de taxe / TPS/TVH",
       "stateProvince": "Province / territoire",
+      "phonePlaceholder": "+1 514 555 0123",
       "emailPlaceholder": "facturation@entreprise.ca",
+      "websitePlaceholder": "https://entreprise.ca",
       "dueOnReceipt": "À la réception",
       "electronicInvoicingDescription": "Votre identifiant d’entreprise sur le réseau PEPPOL permet d’envoyer des factures directement dans le système d’une autre entreprise. Laissez ce champ vide si vous n’utilisez pas ce service.",
       "lockPastDatesDescription": "Verrouillez les dates antérieures pour empêcher toute modification. Aucun élément daté de cette date ou d’une date antérieure ne pourra ensuite être ajouté ou modifié."
