@@ -40,6 +40,7 @@ const localizedSources = [
   "app/(dashboard)/payroll/runs/page.tsx",
   "app/(dashboard)/payroll/runs/[id]/payslips/page.tsx",
   "app/(dashboard)/payroll/runs/[id]/page.tsx",
+  "app/(dashboard)/payroll/leave/page.tsx",
 ];
 
 function visibleLiteralStrings(sourcePath: string): string[] {

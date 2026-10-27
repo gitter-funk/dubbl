@@ -1521,6 +1521,41 @@
       "generating": "Génération…",
       "generatePayslips": "Générer les relevés de paie",
       "viewPayslips": "Voir les relevés de paie"
+    },
+    "LeaveRequests": {
+      "pageTitle": "Paie · Congés",
+      "requestCreated": "Demande de congé créée",
+      "createFailed": "Échec de la création de la demande",
+      "requestApproved": "Demande approuvée",
+      "requestRejected": "Demande rejetée",
+      "title": "Gestion des congés",
+      "description": "Gérez les demandes de congé et les soldes de vacances.",
+      "all": "Toutes",
+      "statuses": {
+        "pending": "En attente",
+        "approved": "Approuvée",
+        "rejected": "Rejetée",
+        "cancelled": "Annulée"
+      },
+      "newRequest": "Nouvelle demande",
+      "searchPlaceholder": "Rechercher par employé…",
+      "noRequests": "Aucune demande de congé trouvée",
+      "unknownEmployee": "Inconnu",
+      "to": "au",
+      "hours": "{count} h",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "newRequestTitle": "Nouvelle demande de congé",
+      "employee": "Employé",
+      "select": "Sélectionner…",
+      "policy": "Politique",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "hoursLabel": "Heures",
+      "reason": "Motif",
+      "cancel": "Annuler",
+      "creating": "Création…",
+      "submitRequest": "Soumettre la demande"
     }
   }
 }

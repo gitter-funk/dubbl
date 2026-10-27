@@ -1784,6 +1784,41 @@
       "generating": "Generating…",
       "generatePayslips": "Generate payslips",
       "viewPayslips": "View payslips"
+    },
+    "LeaveRequests": {
+      "pageTitle": "Payroll · Leave",
+      "requestCreated": "Leave request created",
+      "createFailed": "Failed to create request",
+      "requestApproved": "Request approved",
+      "requestRejected": "Request rejected",
+      "title": "Leave management",
+      "description": "Manage leave requests and PTO balances.",
+      "all": "All",
+      "statuses": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "newRequest": "New request",
+      "searchPlaceholder": "Search by employee...",
+      "noRequests": "No leave requests found",
+      "unknownEmployee": "Unknown",
+      "to": "to",
+      "hours": "{count} hours",
+      "approve": "Approve",
+      "reject": "Reject",
+      "newRequestTitle": "New leave request",
+      "employee": "Employee",
+      "select": "Select...",
+      "policy": "Policy",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "hoursLabel": "Hours",
+      "reason": "Reason",
+      "cancel": "Cancel",
+      "creating": "Creating…",
+      "submitRequest": "Submit request"
     }
   }
 }
