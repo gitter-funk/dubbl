@@ -2130,6 +2130,49 @@
       "unknownEmployee": "Unknown",
       "current": "Current",
       "proposed": "Proposed"
+    },
+    "TaxForms": {
+      "pageTitle": "Payroll · Tax Forms",
+      "detailPageTitle": "Payroll · Tax Form Details",
+      "loading": "Loading...",
+      "statuses": {
+        "draft": "Draft",
+        "generated": "Generated",
+        "sent": "Sent",
+        "filed": "Filed",
+        "approved": "Approved"
+      },
+      "generatedToast": "Generated {count} {form} form(s)",
+      "generateFailed": "Failed to generate",
+      "title": "Tax Forms",
+      "description": "Generate and manage 1099-NEC and W-2 tax forms",
+      "year": "Year",
+      "generating": "Generating...",
+      "generate1099": "Generate 1099-NEC",
+      "generateW2": "Generate W-2",
+      "taxYear": "Tax Year",
+      "formType": "Form Type",
+      "status": "Status",
+      "formsCount": "# Forms",
+      "generated": "Generated",
+      "noGenerations": "No tax form generations yet",
+      "recipient": "Recipient",
+      "taxId": "Tax ID",
+      "keyAmount": "Key Amount",
+      "actions": "Actions",
+      "notFound": "Tax form not found",
+      "backToForms": "Back to tax forms",
+      "downloadPdf": "Download PDF",
+      "formData": "Form Data",
+      "box1NonemployeeCompensation": "Box 1 - Nonemployee Compensation",
+      "w2": {
+        "box1Wages": "Box 1 - Wages, tips, other compensation",
+        "box2FederalTax": "Box 2 - Federal income tax withheld",
+        "box3SocialSecurityWages": "Box 3 - Social security wages",
+        "box4SocialSecurityTax": "Box 4 - Social security tax withheld",
+        "box5MedicareWages": "Box 5 - Medicare wages and tips",
+        "box6MedicareTax": "Box 6 - Medicare tax withheld"
+      }
     }
   }
 }

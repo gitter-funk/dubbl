@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,41 +44,40 @@ interface TaxGeneration {
   forms: TaxFormItem[];
 }
 
-const formatMoney = (cents: number) =>
-  (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-const statusBadge = (status: string) => {
+const statusBadge = (status: string, t: ReturnType<typeof useTranslations>) => {
   switch (status) {
     case "draft":
-      return <Badge variant="secondary">draft</Badge>;
+      return <Badge variant="secondary">{t("statuses.draft")}</Badge>;
     case "generated":
-      return <Badge variant="default">generated</Badge>;
+      return <Badge variant="default">{t("statuses.generated")}</Badge>;
     case "sent":
-      return <Badge variant="outline">sent</Badge>;
+      return <Badge variant="outline">{t("statuses.sent")}</Badge>;
     case "filed":
       return (
         <Badge
           variant="default"
           className="bg-emerald-600 hover:bg-emerald-700"
         >
-          filed
+          {t("statuses.filed")}
         </Badge>
       );
     default:
-      return <Badge variant="secondary">{status}</Badge>;
+      return <Badge variant="secondary">{t.has(`statuses.${status}`) ? t(`statuses.${status}`) : status}</Badge>;
   }
 };
 
 const years = Array.from({ length: 7 }, (_, i) => 2020 + i);
 
 export default function TaxFormsPage() {
+  const t = useTranslations("Payroll.TaxForms");
+  const locale = useLocale();
   const router = useRouter();
   const [generations, setGenerations] = useState<TaxGeneration[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [taxYear, setTaxYear] = useState("2025");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  useDocumentTitle("Payroll · Tax Forms");
+  useDocumentTitle(t("pageTitle"));
 
   const orgId =
     typeof window !== "undefined"
@@ -121,12 +121,10 @@ export default function TaxFormsPage() {
       }
 
       const data = await res.json();
-      toast.success(
-        `Generated ${data.formsGenerated} ${formType === "1099_nec" ? "1099-NEC" : "W-2"} form(s)`
-      );
+      toast.success(t("generatedToast", { count: data.formsGenerated, form: formType === "1099_nec" ? "1099-NEC" : "W-2" }));
       fetchGenerations();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to generate");
+      toast.error(err instanceof Error ? err.message : t("generateFailed"));
     } finally {
       setGenerating(false);
     }
@@ -140,10 +138,10 @@ export default function TaxFormsPage() {
   function getKeyAmount(form: TaxFormItem): string {
     const data = form.formData as Record<string, number>;
     if (form.formType === "1099_nec" && data.box1_nonemployee_compensation) {
-      return formatMoney(data.box1_nonemployee_compensation);
+      return (data.box1_nonemployee_compensation / 100).toLocaleString(locale, { style: "currency", currency: "USD" });
     }
     if (form.formType === "w2" && data.box1_wages) {
-      return formatMoney(data.box1_wages);
+      return (data.box1_wages / 100).toLocaleString(locale, { style: "currency", currency: "USD" });
     }
     return "-";
   }
@@ -151,7 +149,7 @@ export default function TaxFormsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
       </div>
     );
   }
@@ -160,15 +158,15 @@ export default function TaxFormsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight">Tax Forms</h1>
+          <h1 className="text-lg font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Generate and manage 1099-NEC and W-2 tax forms
+            {t("description")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={taxYear} onValueChange={setTaxYear}>
             <SelectTrigger className="w-28">
-              <SelectValue placeholder="Year" />
+            <SelectValue placeholder={t("year")} />
             </SelectTrigger>
             <SelectContent>
               {years.map((y) => (
@@ -184,7 +182,7 @@ export default function TaxFormsPage() {
             disabled={generating}
             onClick={() => handleGenerate("1099_nec")}
           >
-            {generating ? "Generating..." : "Generate 1099-NEC"}
+            {generating ? t("generating") : t("generate1099")}
           </Button>
           <Button
             size="sm"
@@ -192,7 +190,7 @@ export default function TaxFormsPage() {
             onClick={() => handleGenerate("w2")}
             className="bg-emerald-600 hover:bg-emerald-700"
           >
-            {generating ? "Generating..." : "Generate W-2"}
+            {generating ? t("generating") : t("generateW2")}
           </Button>
         </div>
       </div>
@@ -202,11 +200,11 @@ export default function TaxFormsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tax Year</TableHead>
-              <TableHead>Form Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right"># Forms</TableHead>
-              <TableHead>Generated</TableHead>
+              <TableHead>{t("taxYear")}</TableHead>
+              <TableHead>{t("formType")}</TableHead>
+              <TableHead>{t("status")}</TableHead>
+              <TableHead className="text-right">{t("formsCount")}</TableHead>
+              <TableHead>{t("generated")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -216,7 +214,7 @@ export default function TaxFormsPage() {
                   colSpan={5}
                   className="text-center text-muted-foreground py-8"
                 >
-                  No tax form generations yet
+                  {t("noGenerations")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -239,13 +237,13 @@ export default function TaxFormsPage() {
                           ? "1099-MISC"
                           : "W-2"}
                     </TableCell>
-                    <TableCell>{statusBadge(gen.status)}</TableCell>
+                    <TableCell>{statusBadge(gen.status, t)}</TableCell>
                     <TableCell className="text-right font-mono text-sm tabular-nums">
                       {gen.forms?.length || 0}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {gen.generatedAt
-                        ? new Date(gen.generatedAt).toLocaleDateString()
+                        ? new Date(gen.generatedAt).toLocaleDateString(locale)
                         : "-"}
                     </TableCell>
                   </TableRow>
@@ -260,14 +258,14 @@ export default function TaxFormsPage() {
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead>Recipient</TableHead>
-                                  <TableHead>Tax ID</TableHead>
+                                  <TableHead>{t("recipient")}</TableHead>
+                                  <TableHead>{t("taxId")}</TableHead>
                                   <TableHead className="text-right">
-                                    Key Amount
+                                    {t("keyAmount")}
                                   </TableHead>
-                                  <TableHead>Status</TableHead>
+                                  <TableHead>{t("status")}</TableHead>
                                   <TableHead className="text-right">
-                                    Actions
+                                    {t("actions")}
                                   </TableHead>
                                 </TableRow>
                               </TableHeader>
@@ -293,7 +291,7 @@ export default function TaxFormsPage() {
                                       {getKeyAmount(form)}
                                     </TableCell>
                                     <TableCell>
-                                      {statusBadge(form.status)}
+                                      {statusBadge(form.status, t)}
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <Button

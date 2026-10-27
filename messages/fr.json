@@ -2130,6 +2130,49 @@
       "unknownEmployee": "Inconnu",
       "current": "Actuel",
       "proposed": "Proposé"
+    },
+    "TaxForms": {
+      "pageTitle": "Paie · Formulaires fiscaux",
+      "detailPageTitle": "Paie · Détails du formulaire fiscal",
+      "loading": "Chargement…",
+      "statuses": {
+        "draft": "Brouillon",
+        "generated": "Généré",
+        "sent": "Envoyé",
+        "filed": "Produit",
+        "approved": "Approuvé"
+      },
+      "generatedToast": "{count} formulaire(s) {form} généré(s)",
+      "generateFailed": "Échec de la génération",
+      "title": "Formulaires fiscaux",
+      "description": "Générez et gérez les formulaires fiscaux 1099-NEC et W-2",
+      "year": "Année",
+      "generating": "Génération…",
+      "generate1099": "Générer le formulaire 1099-NEC",
+      "generateW2": "Générer le formulaire W-2",
+      "taxYear": "Année fiscale",
+      "formType": "Type de formulaire",
+      "status": "Statut",
+      "formsCount": "Nb de formulaires",
+      "generated": "Généré",
+      "noGenerations": "Aucun formulaire fiscal généré pour le moment",
+      "recipient": "Destinataire",
+      "taxId": "Numéro d’identification fiscale",
+      "keyAmount": "Montant principal",
+      "actions": "Actions",
+      "notFound": "Formulaire fiscal introuvable",
+      "backToForms": "Retour aux formulaires fiscaux",
+      "downloadPdf": "Télécharger le PDF",
+      "formData": "Données du formulaire",
+      "box1NonemployeeCompensation": "Case 1 – Rémunération des non-salariés",
+      "w2": {
+        "box1Wages": "Case 1 – Salaires, pourboires et autres rémunérations",
+        "box2FederalTax": "Case 2 – Impôt fédéral sur le revenu retenu",
+        "box3SocialSecurityWages": "Case 3 – Salaires assujettis à la sécurité sociale",
+        "box4SocialSecurityTax": "Case 4 – Cotisations de sécurité sociale retenues",
+        "box5MedicareWages": "Case 5 – Salaires et pourboires assujettis à Medicare",
+        "box6MedicareTax": "Case 6 – Cotisations Medicare retenues"
+      }
     }
   }
 }

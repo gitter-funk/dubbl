@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,45 +24,35 @@ interface TaxFormDetail {
   };
 }
 
-const formatMoney = (cents: number) =>
-  (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-const statusBadge = (status: string) => {
+const statusBadge = (status: string, t: ReturnType<typeof useTranslations>) => {
   switch (status) {
     case "draft":
-      return <Badge variant="secondary">draft</Badge>;
+      return <Badge variant="secondary">{t("statuses.draft")}</Badge>;
     case "generated":
-      return <Badge variant="default">generated</Badge>;
+      return <Badge variant="default">{t("statuses.generated")}</Badge>;
     case "sent":
-      return <Badge variant="outline">sent</Badge>;
+      return <Badge variant="outline">{t("statuses.sent")}</Badge>;
     case "filed":
       return (
         <Badge
           variant="default"
           className="bg-emerald-600 hover:bg-emerald-700"
         >
-          filed
+          {t("statuses.filed")}
         </Badge>
       );
     default:
-      return <Badge variant="secondary">{status}</Badge>;
+      return <Badge variant="secondary">{t.has(`statuses.${status}`) ? t(`statuses.${status}`) : status}</Badge>;
   }
 };
 
-const w2Labels: Record<string, string> = {
-  box1_wages: "Box 1 - Wages, tips, other compensation",
-  box2_federal_tax: "Box 2 - Federal income tax withheld",
-  box3_ss_wages: "Box 3 - Social security wages",
-  box4_ss_tax: "Box 4 - Social security tax withheld",
-  box5_medicare_wages: "Box 5 - Medicare wages and tips",
-  box6_medicare_tax: "Box 6 - Medicare tax withheld",
-};
-
 export default function TaxFormDetailPage() {
+  const t = useTranslations("Payroll.TaxForms");
+  const locale = useLocale();
   const { id } = useParams<{ id: string }>();
   const [form, setForm] = useState<TaxFormDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  useDocumentTitle("Payroll · Tax Form Details");
+  useDocumentTitle(t("detailPageTitle"));
 
   const orgId =
     typeof window !== "undefined"
@@ -87,7 +78,7 @@ export default function TaxFormDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
       </div>
     );
   }
@@ -95,9 +86,9 @@ export default function TaxFormDetailPage() {
   if (!form) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <p className="text-sm text-muted-foreground">Tax form not found</p>
+        <p className="text-sm text-muted-foreground">{t("notFound")}</p>
         <Button variant="ghost" size="sm" asChild className="mt-2">
-          <Link href="/payroll/tax-forms">Back to tax forms</Link>
+          <Link href="/payroll/tax-forms">{t("backToForms")}</Link>
         </Button>
       </div>
     );
@@ -127,7 +118,7 @@ export default function TaxFormDetailPage() {
               <h1 className="text-lg font-semibold tracking-tight">
                 {formTypeLabel} · {form.taxYear}
               </h1>
-              {statusBadge(form.status)}
+              {statusBadge(form.status, t)}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
               {form.recipientName} · {form.recipientType}
@@ -142,7 +133,7 @@ export default function TaxFormDetailPage() {
           }
         >
           <Download className="mr-2 size-3.5" />
-          Download PDF
+          {t("downloadPdf")}
         </Button>
       </div>
 
@@ -151,23 +142,23 @@ export default function TaxFormDetailPage() {
       {/* Summary cards */}
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Form Type</p>
+          <p className="text-xs text-muted-foreground">{t("formType")}</p>
           <p className="mt-1 text-lg font-bold">{formTypeLabel}</p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Tax Year</p>
+          <p className="text-xs text-muted-foreground">{t("taxYear")}</p>
           <p className="mt-1 text-lg font-bold font-mono tabular-nums">
             {form.taxYear}
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Recipient</p>
+          <p className="text-xs text-muted-foreground">{t("recipient")}</p>
           <p className="mt-1 text-lg font-bold truncate">
             {form.recipientName}
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Tax ID</p>
+          <p className="text-xs text-muted-foreground">{t("taxId")}</p>
           <p className="mt-1 text-lg font-bold font-mono">
             {form.recipientTaxId
               ? `***-${form.recipientTaxId.slice(-4)}`
@@ -178,23 +169,23 @@ export default function TaxFormDetailPage() {
 
       {/* Form data */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold">Form Data</h2>
+        <h2 className="text-sm font-semibold">{t("formData")}</h2>
         <div className="rounded-lg border divide-y">
           {form.formType === "1099_nec" && (
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-muted-foreground">
-                Box 1 - Nonemployee Compensation
+                {t("box1NonemployeeCompensation")}
               </span>
               <span className="text-sm font-mono font-bold tabular-nums">
                 {typeof data.box1_nonemployee_compensation === "number"
-                  ? formatMoney(data.box1_nonemployee_compensation)
+                  ? (data.box1_nonemployee_compensation / 100).toLocaleString(locale, { style: "currency", currency: "USD" })
                   : "-"}
               </span>
             </div>
           )}
 
           {form.formType === "w2" &&
-            Object.entries(w2Labels).map(([key, label]) => (
+            Object.entries({ box1_wages: t("w2.box1Wages"), box2_federal_tax: t("w2.box2FederalTax"), box3_ss_wages: t("w2.box3SocialSecurityWages"), box4_ss_tax: t("w2.box4SocialSecurityTax"), box5_medicare_wages: t("w2.box5MedicareWages"), box6_medicare_tax: t("w2.box6MedicareTax") }).map(([key, label]) => (
               <div
                 key={key}
                 className="flex items-center justify-between px-4 py-3"
@@ -202,7 +193,7 @@ export default function TaxFormDetailPage() {
                 <span className="text-sm text-muted-foreground">{label}</span>
                 <span className="text-sm font-mono font-bold tabular-nums">
                   {typeof data[key] === "number"
-                    ? formatMoney(data[key] as number)
+                    ? ((data[key] as number) / 100).toLocaleString(locale, { style: "currency", currency: "USD" })
                     : "-"}
                 </span>
               </div>
@@ -213,7 +204,7 @@ export default function TaxFormDetailPage() {
             .filter(
               ([key]) =>
                 !key.startsWith("box") &&
-                !Object.keys(w2Labels).includes(key)
+                !["box1_wages", "box2_federal_tax", "box3_ss_wages", "box4_ss_tax", "box5_medicare_wages", "box6_medicare_tax"].includes(key)
             )
             .map(([key, value]) => (
               <div
