@@ -8,6 +8,7 @@ import { notFound, handleError } from "@/lib/api/response";
 import { generateInvoiceHtml } from "@/lib/documents/pdf-generator";
 import { renderPayslipPdf } from "@/lib/documents/payslip-pdf-renderer";
 import { defaultLocale, locales } from "@/lib/i18n/locales";
+import { getTemplatePreviewDocumentKind } from "@/lib/documents/template-preview";
 
 export async function POST(
   request: Request,
@@ -29,7 +30,7 @@ export async function POST(
 
     if (!template) return notFound("Template");
 
-    if (template.type === "payslip") {
+    if (getTemplatePreviewDocumentKind(template.type) === "payslip") {
       const locale = locales.includes(template.locale as (typeof locales)[number])
         ? template.locale as (typeof locales)[number]
         : defaultLocale;
