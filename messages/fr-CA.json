@@ -1387,6 +1387,34 @@
         "gross": "Avant retenues",
         "net": "Net à payer"
       }
+    },
+    "Payslips": {
+      "pageTitle": "Paie · Relevés de paie",
+      "backToRun": "Retour au cycle",
+      "title": "Relevés de paie",
+      "to": "au",
+      "emptyTitle": "Aucun relevé de paie pour le moment",
+      "emptyDescription": "Utilisez le bouton « Générer les relevés de paie » sur la page du cycle pour créer un relevé pour chaque employé.",
+      "goToRun": "Aller au cycle",
+      "beforeDeductions": "Avant retenues",
+      "taxesAndDeductions": "Impôts et retenues",
+      "takeHome": "Net à payer",
+      "hide": "Masquer",
+      "viewPayslip": "Voir le relevé",
+      "noPayslip": "Aucun relevé de paie",
+      "taxWithheld": "Impôt retenu",
+      "otherDeductions": "Autres retenues",
+      "deductions": "Retenues",
+      "deduction": "Retenue",
+      "yearToDate": "Cumul annuel",
+      "earned": "Gains",
+      "tax": "Impôt",
+      "statuses": {
+        "generated": "Prêt",
+        "sent": "Envoyé",
+        "viewed": "Consulté"
+      },
+      "missingPayslips": "{count, plural, one {# employé n’a pas encore de relevé de paie. Utilisez « Générer les relevés de paie » sur la page du cycle pour le créer.} other {# employés n’ont pas encore de relevé de paie. Utilisez « Générer les relevés de paie » sur la page du cycle pour les créer.}}"
     }
   }
 }
