@@ -148,6 +148,15 @@ test("Spanish UI messages are translated and Mexico resolves to the Spanish cata
   assert.equal(getLocaleCatalogLocale("es-MX"), "es");
 });
 
+test("Italian UI messages use Italian accounting terminology", () => {
+  const italian = leafValues(loadCatalog("it"));
+
+  assert.equal(italian.get("Navigation.dashboard"), "Pannello di controllo");
+  assert.equal(italian.get("Navigation.payroll"), "Paghe");
+  assert.equal(italian.get("Navigation.payslips"), "Buste paga");
+  assert.equal(italian.get("Sales.Quotes.newQuote"), "Nuovo preventivo");
+});
+
 test("nested locale fallback preserves English and French values under regional overrides", () => {
   const resolved = mergeMessages(
     mergeMessages(
