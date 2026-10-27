@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { mergeMessages } from "../lib/i18n/merge-messages";
 
 type CatalogValue = string | { [key: string]: CatalogValue };
 type Catalog = Record<string, CatalogValue>;
@@ -79,6 +80,59 @@ test("every locale provides all English message keys through its fallback chain"
     [],
     `Missing translations (regional catalogs may inherit from their base language):\n${failures.join("\n")}`
   );
+});
+
+test("regional catalogs contain only messages that differ from their base language", () => {
+  const french = leafValues(loadCatalog("fr"));
+  const canadianFrench = leafValues(loadCatalog("fr-CA"));
+  const duplicatedMessages = [...canadianFrench].filter(
+    ([key, value]) => french.get(key) === value,
+  );
+
+  assert.deepEqual(
+    duplicatedMessages,
+    [],
+    `fr-CA should inherit identical French strings instead of duplicating them:\n${duplicatedMessages
+      .map(([key]) => key)
+      .join("\n")}`,
+  );
+});
+
+test("regional catalogs inherit French and English messages at runtime", () => {
+  const resolved = mergeMessages(
+    mergeMessages(loadCatalog("en"), loadCatalog("fr")),
+    loadCatalog("fr-CA"),
+  );
+  const resolvedLeaves = leafValues(resolved as CatalogValue);
+
+  assert.equal(
+    resolvedLeaves.get("Sales.Quotes.newQuote"),
+    "Nouvelle soumission",
+    "Canadian French overrides its parent French message",
+  );
+  assert.equal(
+    resolvedLeaves.get("Navigation.dashboard"),
+    leafValues(loadCatalog("fr")).get("Navigation.dashboard"),
+    "Canadian French inherits the parent French message when no override exists",
+  );
+});
+
+test("nested locale fallback preserves English and French values under regional overrides", () => {
+  const resolved = mergeMessages(
+    mergeMessages(
+      {
+        englishOnly: "English fallback",
+        nested: { parentLanguage: "English parent", regional: "English regional" },
+      },
+      { nested: { parentLanguage: "French parent" } },
+    ),
+    { nested: { regional: "French Canadian regional" } },
+  );
+  const nested = resolved.nested as Record<string, unknown>;
+
+  assert.equal(resolved.englishOnly, "English fallback");
+  assert.equal(nested.parentLanguage, "French parent");
+  assert.equal(nested.regional, "French Canadian regional");
 });
 
 test("translations preserve the placeholders used by English messages", () => {
