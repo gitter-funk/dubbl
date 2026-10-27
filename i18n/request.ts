@@ -1,6 +1,6 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies } from "next/headers";
-import { resolveLocale } from "@/lib/i18n/locales";
+import { getLocaleCatalogLocale, resolveLocale } from "@/lib/i18n/locales";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -16,7 +16,9 @@ export default getRequestConfig(async () => {
     : undefined;
   const locale = resolveLocale(cookieLocale ?? user?.locale, await getInstanceLocales());
   const english = (await import("../messages/en.json")).default;
-  const french = locale.startsWith("fr") ? (await import("../messages/fr.json")).default : {};
+  const catalogLocale = getLocaleCatalogLocale(locale);
+  // Languages without a catalog inherit English until their translation PR adds one.
+  const french = catalogLocale === "fr" ? (await import("../messages/fr.json")).default : {};
   const regional = locale === "fr-CA" ? (await import("../messages/fr-CA.json")).default : {};
   return { locale, messages: mergeMessages(mergeMessages(english, french), regional) };
 });

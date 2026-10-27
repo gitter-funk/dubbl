@@ -170,7 +170,7 @@ export function registerContactTools(server: McpServer, ctx: AuthContext) {
       name: z.string().describe("Contact name"),
       email: z.string().optional().describe("Email address"),
       phone: z.string().optional().describe("Phone number"),
-      preferredLocale: z.enum(locales).nullable().optional().describe("Preferred language for invoices and customer/supplier documents: en, fr, or fr-CA; omit to use the organization default"),
+      preferredLocale: z.enum(locales).nullable().optional().describe(`Preferred locale for invoices and customer/supplier documents. Supported tags: ${locales.join(", ")}; omit to use the organization default`),
       taxNumber: z
         .string()
         .optional()
@@ -255,7 +255,7 @@ export function registerContactTools(server: McpServer, ctx: AuthContext) {
       name: z.string().optional().describe("New name"),
       email: z.string().optional().describe("New email"),
       phone: z.string().optional().describe("New phone"),
-      preferredLocale: z.enum(locales).nullable().optional().describe("Preferred language for invoices and customer/supplier documents: en, fr, or fr-CA; null clears the preference and uses the organization default"),
+      preferredLocale: z.enum(locales).nullable().optional().describe(`Preferred locale for invoices and customer/supplier documents. Supported tags: ${locales.join(", ")}; null clears the preference and uses the organization default`),
       taxNumber: z.string().optional().describe("New tax number"),
       type: z
         .enum(["customer", "supplier", "both"])
