@@ -157,6 +157,17 @@ test("Italian UI messages use Italian accounting terminology", () => {
   assert.equal(italian.get("Sales.Quotes.newQuote"), "Nuovo preventivo");
 });
 
+test("European Portuguese uses Portugal-specific payroll and quote terms", () => {
+  const portuguese = leafValues(loadCatalog("pt"));
+
+  assert.equal(portuguese.get("Navigation.payroll"), "Processamento salarial");
+  assert.equal(portuguese.get("Navigation.quotes"), "Orçamentos");
+  assert.equal(portuguese.get("Navigation.payslips"), "Recibos de vencimento");
+  assert.equal(portuguese.get("Sales.Quotes.newQuote"), "Novo orçamento");
+  assert.equal(getLocaleCatalogLocale("pt-PT"), "pt");
+  assert.equal(getLocaleCatalogLocale("pt-BR"), "pt");
+});
+
 test("nested locale fallback preserves English and French values under regional overrides", () => {
   const resolved = mergeMessages(
     mergeMessages(
