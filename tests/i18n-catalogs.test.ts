@@ -207,6 +207,18 @@ test("Brazilian Portuguese overrides inherit the European Portuguese base catalo
   assert.equal(resolved.get("Navigation.payroll"), "Folha de pagamento");
 });
 
+test("Simplified Chinese UI messages resolve for Chinese Simplified locales", () => {
+  const chinese = leafValues(loadCatalog("zh-Hans"));
+  const resolved = leafValues(
+    mergeMessages(loadCatalog("en"), loadCatalog("zh-Hans")) as CatalogValue,
+  );
+
+  assert.equal(chinese.get("Navigation.dashboard"), "仪表板");
+  assert.equal(chinese.get("Navigation.settings"), "设置");
+  assert.equal(resolved.get("Navigation.payroll"), "工资");
+  assert.equal(getLocaleCatalogLocale("zh-Hans"), "zh-Hans");
+});
+
 test("nested locale fallback preserves English and French values under regional overrides", () => {
   const resolved = mergeMessages(
     mergeMessages(
