@@ -29,6 +29,8 @@ export default getRequestConfig(async () => {
             ? (await import("../messages/pt.json")).default
             : catalogLocale === "zh-Hans"
               ? (await import("../messages/zh-Hans.json")).default
+              : catalogLocale === "zh-Hant"
+                ? (await import("../messages/zh-Hant.json")).default
             : {};
   const regionalCatalog = locale === "fr-CA"
     ? (await import("../messages/fr-CA.json")).default
