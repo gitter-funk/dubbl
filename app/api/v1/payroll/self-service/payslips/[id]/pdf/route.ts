@@ -1,3 +1,4 @@
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -34,6 +35,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const org = await db.query.organization.findFirst({ where: eq(organization.id, ctx.organizationId) });
     if (!run || !org) return notFound("Payslip");
     const locale = resolveDocumentLocale(employee.preferredLocale, org.documentLocale, org.enabledLocales, await getInstanceLocales());
+    const template = await getDocumentTemplateForRecipient({ organizationId: ctx.organizationId, type: "payslip", preferredLocale: employee.preferredLocale });
     const breakdown = Array.isArray(slip.deductionsBreakdown) ? slip.deductionsBreakdown as Array<{ name?: string; category?: string; amount?: number }> : [];
     const pdf = await renderPayslipPdf({
       employeeName: employee.name,
@@ -50,7 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       ytdTax: slip.ytdTax,
       ytdNet: slip.ytdNet,
       deductionLines: breakdown.map((item) => ({ name: item.name || item.category || "Deduction", amount: item.amount || 0 })),
-    }, locale);
+    }, locale, template);
     return new NextResponse(pdf, { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="payslip-${employee.employeeNumber}-${run.payPeriodEnd}.pdf"` } });
   } catch (err) {
     return handleError(err);

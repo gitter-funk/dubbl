@@ -1,6 +1,7 @@
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { purchaseOrder, documentTemplate, organization } from "@/lib/db/schema";
+import { purchaseOrder, organization } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getAuthContext } from "@/lib/api/auth-context";
 import { notDeleted } from "@/lib/db/soft-delete";
@@ -32,14 +33,7 @@ export async function GET(
 
     if (!found) return notFound("Purchase order");
 
-    const template = await db.query.documentTemplate.findFirst({
-      where: and(
-        eq(documentTemplate.organizationId, ctx.organizationId),
-        eq(documentTemplate.type, "purchase_order"),
-        eq(documentTemplate.isDefault, true),
-        notDeleted(documentTemplate.deletedAt)
-      ),
-    });
+    const template = await getDocumentTemplateForRecipient({ organizationId: ctx.organizationId, type: "purchase_order", preferredLocale: found.contact?.preferredLocale });
 
     const org = await db.query.organization.findFirst({
       where: eq(organization.id, ctx.organizationId),

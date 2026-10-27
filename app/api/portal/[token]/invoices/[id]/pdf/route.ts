@@ -1,8 +1,8 @@
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { portalAccessToken, invoice, documentTemplate, organization } from "@/lib/db/schema";
+import { portalAccessToken, invoice, organization } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
-import { notDeleted } from "@/lib/db/soft-delete";
 import { notFound, error, handleError } from "@/lib/api/response";
 import { generateInvoiceHtml } from "@/lib/documents/pdf-generator";
 import type { SenderSnapshot, RecipientSnapshot } from "@/lib/documents/snapshots";
@@ -41,14 +41,7 @@ export async function GET(
 
     if (!inv) return notFound("Invoice");
 
-    const template = await db.query.documentTemplate.findFirst({
-      where: and(
-        eq(documentTemplate.organizationId, access.organizationId),
-        eq(documentTemplate.type, "invoice"),
-        eq(documentTemplate.isDefault, true),
-        notDeleted(documentTemplate.deletedAt)
-      ),
-    });
+    const template = await getDocumentTemplateForRecipient({ organizationId: access.organizationId, type: "invoice", preferredLocale: inv.contact?.preferredLocale });
 
     // Use snapshot if available, otherwise build from live data
     const sender = inv.senderSnapshot as SenderSnapshot | null;

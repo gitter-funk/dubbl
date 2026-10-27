@@ -6,6 +6,8 @@ import { getAuthContext } from "@/lib/api/auth-context";
 import { notDeleted } from "@/lib/db/soft-delete";
 import { notFound, handleError } from "@/lib/api/response";
 import { generateInvoiceHtml } from "@/lib/documents/pdf-generator";
+import { renderPayslipPdf } from "@/lib/documents/payslip-pdf-renderer";
+import { defaultLocale, locales } from "@/lib/i18n/locales";
 
 export async function POST(
   request: Request,
@@ -26,6 +28,34 @@ export async function POST(
     });
 
     if (!template) return notFound("Template");
+
+    if (template.type === "payslip") {
+      const locale = locales.includes(template.locale as (typeof locales)[number])
+        ? template.locale as (typeof locales)[number]
+        : defaultLocale;
+      const pdfBuffer = await renderPayslipPdf({
+        employeeName: "Sample Employee",
+        employeeNumber: "EMP-0001",
+        periodStart: "2026-03-01",
+        periodEnd: "2026-03-31",
+        generatedAt: new Date("2026-04-01T12:00:00Z"),
+        currency: "CAD",
+        gross: 500000,
+        tax: 85000,
+        deductions: 15000,
+        net: 400000,
+        ytdGross: 1500000,
+        ytdTax: 255000,
+        ytdNet: 1200000,
+        deductionLines: [{ name: locale === "en" ? "Health benefits" : "Assurance maladie", amount: 15000 }],
+      }, locale, template);
+      return new NextResponse(pdfBuffer, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="sample-payslip-${locale}.pdf"`,
+        },
+      });
+    }
 
     const { organization } = await import("@/lib/db/schema");
     const org = await db.query.organization.findFirst({
@@ -94,6 +124,7 @@ export async function POST(
           email: sampleData.contactEmail,
           address: sampleData.contactAddress,
           taxNumber: sampleData.contactTaxNumber,
+          preferredLocale: template.locale,
         },
         template
       );

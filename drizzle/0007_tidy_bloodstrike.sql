@@ -1,0 +1,1 @@
+ALTER TABLE "document_template" ADD COLUMN "locale" text DEFAULT 'en' NOT NULL;

@@ -7,6 +7,7 @@ import { wrapTool } from "@/lib/mcp/errors";
 import { sendDocumentEmail } from "@/lib/email/document-sender";
 import { renderDocumentEmailHtml } from "@/lib/email/render-document-email";
 import { formatMoney } from "@/lib/money";
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 import type { AuthContext } from "@/lib/api/auth-context";
 
 export function registerEmailTools(server: McpServer, ctx: AuthContext) {
@@ -97,6 +98,7 @@ export function registerEmailTools(server: McpServer, ctx: AuthContext) {
               with: { lines: true, contact: true },
             });
             if (inv) {
+              const template = await getDocumentTemplateForRecipient({ organizationId: ctx.organizationId, type: "invoice", preferredLocale: inv.contact?.preferredLocale });
               const buf = await renderInvoicePdf(
                 {
                   invoiceNumber: inv.invoiceNumber,
@@ -117,7 +119,7 @@ export function registerEmailTools(server: McpServer, ctx: AuthContext) {
                 },
                 { name: org?.name || "", documentLocale: org?.documentLocale, enabledLocales: org?.enabledLocales },
                 inv.contact ? { name: inv.contact.name, preferredLocale: inv.contact.preferredLocale } : { name: "Unknown" },
-                {}
+                template || {}
               );
               pdfBuffer = Buffer.from(buf);
               pdfFilename = `invoice-${inv.invoiceNumber}.pdf`;
@@ -221,6 +223,7 @@ export function registerEmailTools(server: McpServer, ctx: AuthContext) {
               with: { lines: true, contact: true },
             });
             if (inv) {
+              const template = await getDocumentTemplateForRecipient({ organizationId: ctx.organizationId, type: "invoice", preferredLocale: inv.contact?.preferredLocale });
               const buf = await renderInvoicePdf(
                 {
                   invoiceNumber: inv.invoiceNumber,
@@ -241,7 +244,7 @@ export function registerEmailTools(server: McpServer, ctx: AuthContext) {
                 },
                 { name: org?.name || "", documentLocale: org?.documentLocale, enabledLocales: org?.enabledLocales },
                 inv.contact ? { name: inv.contact.name, preferredLocale: inv.contact.preferredLocale } : { name: "Unknown" },
-                {}
+                template || {}
               );
               pdfBuffer = Buffer.from(buf);
               pdfFilename = `invoice-${inv.invoiceNumber}.pdf`;

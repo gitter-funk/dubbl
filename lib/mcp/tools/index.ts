@@ -55,6 +55,7 @@ import { registerReminderTools } from "./reminders";
 import { registerCrmTools } from "./crm";
 import { registerWarehouseTools } from "./warehouses";
 import { registerLocalizationTools } from "./localization";
+import { registerDocumentTemplateTools } from "./document-templates";
 
 export function registerAllTools(server: McpServer, ctx: AuthContext) {
   registerOrganizationTools(server, ctx);
@@ -112,4 +113,5 @@ export function registerAllTools(server: McpServer, ctx: AuthContext) {
   registerCrmTools(server, ctx);
   registerWarehouseTools(server, ctx);
   registerLocalizationTools(server, ctx);
+  registerDocumentTemplateTools(server, ctx);
 }
