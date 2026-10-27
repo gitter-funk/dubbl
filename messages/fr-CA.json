@@ -1969,6 +1969,29 @@
           "description": "Montants retenus pour la retraite et les avantages sociaux"
         }
       }
+    },
+    "Forecasting": {
+      "pageTitle": "Paie · Prévisions",
+      "title": "Prévisions",
+      "description": "Projetez les coûts futurs de paie et simulez différents scénarios.",
+      "twelveMonthGross": "Brut sur 12 mois",
+      "twelveMonthNet": "Net sur 12 mois",
+      "headcount": "Effectif",
+      "month": "Mois",
+      "gross": "Brut",
+      "net": "Net",
+      "whatIfAnalysis": "Analyse de scénarios",
+      "salaryAdjustment": "Ajustement salarial (%)",
+      "newHires": "Nouvelles embauches",
+      "averageNewHireSalary": "Salaire moyen des nouvelles embauches",
+      "terminations": "Départs",
+      "calculating": "Calcul en cours…",
+      "runScenario": "Lancer le scénario",
+      "currentMonthly": "Mensuel actuel",
+      "employeesCount": "{count, plural, one {# employé} other {# employés}}",
+      "projectedMonthly": "Mensuel projeté",
+      "difference": "Différence",
+      "perMonth": "par mois"
     }
   }
 }
