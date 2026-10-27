@@ -1591,6 +1591,65 @@
       "dangerZoneDescription": "Irreversible actions for this employee.",
       "deleteEmployee": "Delete employee",
       "deleteEmployeeDescription": "Permanently delete this employee and all associated data."
+    },
+    "Runs": {
+      "pageTitle": "Payroll · Runs",
+      "createFailed": "Failed to create payroll run",
+      "created": "Payroll run created",
+      "offCycleCreateFailed": "Failed to create {type} run",
+      "offCycleCreated": "{type} run created",
+      "steps": {
+        "setUp": "Set up",
+        "review": "Review",
+        "finish": "Finish & record"
+      },
+      "emptyTitle": "Run your first payroll",
+      "emptyDescription": "Set up a pay run for a date range, check each employee’s pay, then finish it to lock in the amounts and record the wages.",
+      "newRun": "New payroll run",
+      "all": "All",
+      "statuses": {
+        "draft": "Not finished",
+        "processing": "Finishing",
+        "completed": "Finished & recorded",
+        "pendingApproval": "Waiting for sign-off",
+        "void": "Cancelled"
+      },
+      "oneOffHelp": "A one-off payment outside your normal payday",
+      "oneOffPayment": "One-off payment",
+      "finalPayHelp": "A final pay for someone leaving",
+      "finalPay": "Final pay (someone leaving)",
+      "bonusOnlyHelp": "A one-off bonus payment",
+      "bonusOnly": "Bonus only",
+      "correctionHelp": "Fix a mistake in a past payroll",
+      "fixPastPayroll": "Fix a past payroll",
+      "allTypes": "All types",
+      "runTypes": {
+        "regular": "Regular",
+        "termination": "Termination",
+        "bonus": "Bonus",
+        "correction": "Correction",
+        "offCycle": "Off-cycle"
+      },
+      "searchPlaceholder": "Search by date or status...",
+      "loading": "Loading",
+      "noRunsFound": "No runs found",
+      "tryDifferentSearch": "Try a different search term",
+      "noRunsMatchFilter": "No runs match this filter",
+      "to": "to",
+      "beforeDeductions": "Before deductions",
+      "taxesAndDeductions": "Taxes & deductions",
+      "takeHome": "Take-home",
+      "newRunTitle": "New payroll run",
+      "payPeriodStart": "Pay period start",
+      "payPeriodEnd": "Pay period end",
+      "cancel": "Cancel",
+      "creating": "Creating…",
+      "createRun": "Create run",
+      "sort": {
+        "date": "Date",
+        "gross": "Before deductions",
+        "net": "Take-home"
+      }
     }
   }
 }
