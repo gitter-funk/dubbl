@@ -83,6 +83,30 @@ test("every locale provides all English message keys through its fallback chain"
   );
 });
 
+test("locale catalogs only contain keys present in the English source", () => {
+  const englishKeys = new Set(leafValues(loadCatalog("en")).keys());
+  const catalogFiles = readdirSync(messagesDir)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const failures: string[] = [];
+
+  for (const file of catalogFiles) {
+    if (file === "en.json") continue;
+    const locale = file.slice(0, -".json".length);
+    const extraKeys = [...leafValues(loadCatalog(locale)).keys()]
+      .filter((key) => !englishKeys.has(key));
+    if (extraKeys.length > 0) {
+      failures.push(locale + ":\n  " + extraKeys.join("\n  "));
+    }
+  }
+
+  assert.deepEqual(
+    failures,
+    [],
+    "Locale catalogs must not contain unknown message keys:\n" + failures.join("\n"),
+  );
+});
+
 test("regional catalogs contain only messages that differ from their base language", () => {
   const catalogFiles = readdirSync(messagesDir)
     .filter((file) => file.endsWith(".json"))
@@ -166,6 +190,21 @@ test("European Portuguese uses Portugal-specific payroll and quote terms", () =>
   assert.equal(portuguese.get("Sales.Quotes.newQuote"), "Novo orçamento");
   assert.equal(getLocaleCatalogLocale("pt-PT"), "pt");
   assert.equal(getLocaleCatalogLocale("pt-BR"), "pt");
+});
+
+test("Brazilian Portuguese overrides inherit the European Portuguese base catalog", () => {
+  const portuguese = leafValues(loadCatalog("pt"));
+  const brazilianOverrides = leafValues(loadCatalog("pt-BR"));
+  const resolved = leafValues(
+    mergeMessages(
+      mergeMessages(loadCatalog("en"), loadCatalog("pt")),
+      loadCatalog("pt-BR"),
+    ) as CatalogValue,
+  );
+
+  assert.equal(brazilianOverrides.get("Navigation.payroll"), "Folha de pagamento");
+  assert.equal(resolved.get("Navigation.dashboard"), portuguese.get("Navigation.dashboard"));
+  assert.equal(resolved.get("Navigation.payroll"), "Folha de pagamento");
 });
 
 test("nested locale fallback preserves English and French values under regional overrides", () => {

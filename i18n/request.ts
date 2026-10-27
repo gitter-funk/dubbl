@@ -32,6 +32,8 @@ export default getRequestConfig(async () => {
     ? (await import("../messages/fr-CA.json")).default
     : locale === "de-CH"
       ? (await import("../messages/de-CH.json")).default
+      : locale === "pt-BR"
+        ? (await import("../messages/pt-BR.json")).default
       : {};
   return {
     locale,

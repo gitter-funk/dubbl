@@ -7,9 +7,7 @@
     "sales-tax": "Taxes de vente",
     "vat-return": "Déclaration de TPS/TVH"
   },
-  "Common": {
-    "email": "Courriel"
-  },
+  "Common": {},
   "Settings": {
     "General": {
       "taxIdVat": "Numéro de taxe / TPS/TVH",
@@ -273,8 +271,7 @@
     },
     "Settings": {
       "leavePoliciesDescription": "Configurez les règles de vacances et d’accumulation.",
-      "selfServiceDescription": "Les employés peuvent consulter leurs relevés de paie, mettre à jour leurs formulaires fiscaux et gérer leurs préférences de paie.",
-      "pageTitle": "Paie · Paramètres"
+      "selfServiceDescription": "Les employés peuvent consulter leurs relevés de paie, mettre à jour leurs formulaires fiscaux et gérer leurs préférences de paie."
     },
     "Contractors": {
       "pageTitle": "Paie · Fournisseurs",
