@@ -17,8 +17,18 @@ export default getRequestConfig(async () => {
   const locale = resolveLocale(cookieLocale ?? user?.locale, await getInstanceLocales());
   const english = (await import("../messages/en.json")).default;
   const catalogLocale = getLocaleCatalogLocale(locale);
-  // Languages without a catalog inherit English until their translation PR adds one.
-  const french = catalogLocale === "fr" ? (await import("../messages/fr.json")).default : {};
-  const regional = locale === "fr-CA" ? (await import("../messages/fr-CA.json")).default : {};
-  return { locale, messages: mergeMessages(mergeMessages(english, french), regional) };
+  const baseCatalog = catalogLocale === "fr"
+    ? (await import("../messages/fr.json")).default
+    : catalogLocale === "de"
+      ? (await import("../messages/de.json")).default
+      : {};
+  const regionalCatalog = locale === "fr-CA"
+    ? (await import("../messages/fr-CA.json")).default
+    : locale === "de-CH"
+      ? (await import("../messages/de-CH.json")).default
+      : {};
+  return {
+    locale,
+    messages: mergeMessages(mergeMessages(english, baseCatalog), regionalCatalog),
+  };
 });
