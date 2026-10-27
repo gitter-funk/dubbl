@@ -67,6 +67,8 @@ export async function POST(
       phone: org?.contactPhone || null,
       email: org?.contactEmail || null,
       countryCode: org?.countryCode || null,
+      documentLocale: org?.documentLocale,
+      enabledLocales: org?.enabledLocales,
     };
 
     if (format === "pdf") {

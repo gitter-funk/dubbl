@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, FileText, ChevronDown, ScrollText } from "lucide-react";
+import { ArrowLeft, FileText, ChevronDown, ScrollText, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ContentReveal } from "@/components/ui/content-reveal";
@@ -239,6 +239,25 @@ export default function RunPayslipsPage() {
                         <Badge variant="outline" className="text-[10px]">
                           {t(`statuses.${ps.status}` as "statuses.generated" | "statuses.sent" | "statuses.viewed")}
                         </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            const orgId = localStorage.getItem("activeOrgId");
+                            if (!orgId) return;
+                            const response = await fetch(`/api/v1/payroll/payslips/${ps.id}/pdf`, { headers: { "x-organization-id": orgId } });
+                            if (!response.ok) return;
+                            const url = URL.createObjectURL(await response.blob());
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = `payslip-${row.employeeNumber}.pdf`;
+                            link.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          aria-label={t("downloadPayslip")}
+                        >
+                          <Download className="size-3.5" />
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"

@@ -55,6 +55,8 @@ export async function GET(
       phone: org?.contactPhone || null,
       email: org?.contactEmail || null,
       countryCode: org?.countryCode || null,
+      documentLocale: org?.documentLocale,
+      enabledLocales: org?.enabledLocales,
     };
 
     const contactAddress = formatContactAddress(
@@ -107,6 +109,7 @@ export async function GET(
           email: docData.contactEmail,
           address: contactAddress,
           taxNumber: docData.contactTaxNumber,
+          preferredLocale: found.contact?.preferredLocale,
         },
         templateSettings,
         {

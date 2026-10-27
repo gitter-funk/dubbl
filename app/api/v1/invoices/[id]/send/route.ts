@@ -120,8 +120,8 @@ export async function POST(
               total: found.total,
               notes: found.notes,
             },
-            { name: org?.name || "" },
-            found.contact ? { name: found.contact.name } : { name: "Unknown" },
+            { name: org?.name || "", documentLocale: org?.documentLocale, enabledLocales: org?.enabledLocales },
+            found.contact ? { name: found.contact.name, preferredLocale: found.contact.preferredLocale } : { name: "Unknown" },
             {}
           );
           pdfBuffer = Buffer.from(buf);

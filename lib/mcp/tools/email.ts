@@ -115,8 +115,8 @@ export function registerEmailTools(server: McpServer, ctx: AuthContext) {
                   total: inv.total,
                   notes: inv.notes,
                 },
-                { name: org?.name || "" },
-                inv.contact ? { name: inv.contact.name } : { name: "Unknown" },
+                { name: org?.name || "", documentLocale: org?.documentLocale, enabledLocales: org?.enabledLocales },
+                inv.contact ? { name: inv.contact.name, preferredLocale: inv.contact.preferredLocale } : { name: "Unknown" },
                 {}
               );
               pdfBuffer = Buffer.from(buf);
@@ -239,8 +239,8 @@ export function registerEmailTools(server: McpServer, ctx: AuthContext) {
                   total: inv.total,
                   notes: inv.notes,
                 },
-                { name: org?.name || "" },
-                inv.contact ? { name: inv.contact.name } : { name: "Unknown" },
+                { name: org?.name || "", documentLocale: org?.documentLocale, enabledLocales: org?.enabledLocales },
+                inv.contact ? { name: inv.contact.name, preferredLocale: inv.contact.preferredLocale } : { name: "Unknown" },
                 {}
               );
               pdfBuffer = Buffer.from(buf);

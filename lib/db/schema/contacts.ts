@@ -28,6 +28,7 @@ export const contact = pgTable("contact", {
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
+  preferredLocale: text("preferred_locale"),
   taxNumber: text("tax_number"),
   type: contactTypeEnum("type").notNull().default("customer"),
   paymentTermsDays: integer("payment_terms_days").default(30),

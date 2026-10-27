@@ -7,6 +7,7 @@ import { notFound, error, handleError } from "@/lib/api/response";
 import { generateInvoiceHtml } from "@/lib/documents/pdf-generator";
 import type { SenderSnapshot, RecipientSnapshot } from "@/lib/documents/snapshots";
 import { formatContactAddress } from "@/lib/documents/snapshots";
+import type { OrgInfo } from "@/lib/documents/pdf-renderer";
 
 export async function GET(
   request: Request,
@@ -53,7 +54,7 @@ export async function GET(
     const sender = inv.senderSnapshot as SenderSnapshot | null;
     const recipient = inv.recipientSnapshot as RecipientSnapshot | null;
 
-    let orgInfo;
+    let orgInfo: OrgInfo;
     if (sender) {
       orgInfo = sender;
     } else {
@@ -71,8 +72,13 @@ export async function GET(
         phone: org?.contactPhone || null,
         email: org?.contactEmail || null,
         countryCode: org?.countryCode || null,
+        documentLocale: org?.documentLocale,
+        enabledLocales: org?.enabledLocales,
       };
     }
+
+    const localeOrg = await db.query.organization.findFirst({ where: eq(organization.id, access.organizationId) });
+    orgInfo = { ...orgInfo, documentLocale: localeOrg?.documentLocale, enabledLocales: localeOrg?.enabledLocales };
 
     const contactAddress = recipient?.address ?? formatContactAddress(inv.contact?.addresses as Record<string, { line1?: string; line2?: string; city?: string; state?: string; postalCode?: string; country?: string }> | null);
 
@@ -127,6 +133,7 @@ export async function GET(
           email: invoiceData.contactEmail,
           address: contactAddress,
           taxNumber: invoiceData.contactTaxNumber,
+          preferredLocale: inv.contact?.preferredLocale,
         },
         templateSettings
       );

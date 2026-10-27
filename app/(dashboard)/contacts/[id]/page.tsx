@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Section } from "@/components/dashboard/section";
@@ -22,10 +23,14 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { CurrencySelect } from "@/components/ui/currency-select";
 import { useContactContext, getOrgId } from "./layout";
 import type { Account, TaxRate, ContactDetail } from "./layout";
+import { DocumentLocaleSelect } from "@/components/shared/document-locale-select";
+import { useDocumentLocales } from "@/lib/hooks/use-document-locales";
+import type { AppLocale } from "@/lib/i18n/locales";
 
 export default function ContactDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const tCommon = useTranslations("Common");
   const {
     contact,
     setContact,
@@ -53,6 +58,12 @@ export default function ContactDetailsPage() {
   const [deleting] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
+  const [preferredLocale, setPreferredLocale] = useState<AppLocale | "">((contact.preferredLocale as AppLocale | null) ?? "");
+  const documentLocales = useDocumentLocales();
+
+  useEffect(() => {
+    setPreferredLocale((contact.preferredLocale as AppLocale | null) ?? "");
+  }, [contact.preferredLocale]);
 
   const fetchReferenceData = useCallback(() => {
     const orgId = getOrgId();
@@ -101,6 +112,7 @@ export default function ContactDetailsPage() {
           name: form.get("name"),
           email: form.get("email") || null,
           phone: form.get("phone") || null,
+          preferredLocale: preferredLocale || null,
           taxNumber: form.get("taxNumber") || null,
           type: formType,
           paymentTermsDays:
@@ -122,6 +134,7 @@ export default function ContactDetailsPage() {
       const data = await res.json();
       const c = data.contact as ContactDetail;
       setContact(c);
+      setPreferredLocale((c.preferredLocale as AppLocale | null) ?? "");
       setFormType(c.type);
       setFormRevenueAccountId(c.defaultRevenueAccountId || "none");
       setFormExpenseAccountId(c.defaultExpenseAccountId || "none");
@@ -197,6 +210,16 @@ export default function ContactDetailsPage() {
                 <Label className="text-xs">Tax number / VAT</Label>
                 <Input name="taxNumber" defaultValue={contact.taxNumber || ""} placeholder="e.g. US12-3456789" />
               </div>
+            </div>
+            <div className="max-w-sm space-y-1.5">
+              <Label className="text-xs">{tCommon("preferredDocumentLanguage")}</Label>
+              <DocumentLocaleSelect
+                id="contact-document-locale"
+                value={preferredLocale}
+                locales={documentLocales}
+                onChange={setPreferredLocale}
+              />
+              <p className="text-xs text-muted-foreground">{tCommon("documentLanguageHelp")}</p>
             </div>
           </div>
         </Section>

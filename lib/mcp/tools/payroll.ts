@@ -28,6 +28,8 @@ import { notDeleted } from "@/lib/db/soft-delete";
 import { requireRole } from "@/lib/api/require-role";
 import { wrapTool } from "@/lib/mcp/errors";
 import { postPayrollRun } from "@/lib/api/payroll-posting";
+import { locales } from "@/lib/i18n/locales";
+import { isLocaleEnabledForOrganization } from "@/lib/i18n/locale-policy";
 import {
   computeEmployeeWithholding,
   getEmployeeYtdWage,
@@ -167,6 +169,7 @@ export function registerPayrollTools(server: McpServer, ctx: AuthContext) {
         .default(2000)
         .describe("Flat fallback tax rate in basis points (2000 = 20%); only used when no bracket schedule exists"),
       email: z.string().email().nullable().optional().describe("Employee email"),
+      preferredLocale: z.enum(locales).nullable().optional().describe("Preferred language for payslips and employee documents: en, fr, or fr-CA; omit to use the organization default"),
       position: z.string().nullable().optional().describe("Job title / position"),
       startDate: z.string().min(1).describe("Employment start date (YYYY-MM-DD)"),
       endDate: z.string().nullable().optional().describe("Employment end date (YYYY-MM-DD), if any"),
@@ -178,12 +181,17 @@ export function registerPayrollTools(server: McpServer, ctx: AuthContext) {
       wrapTool(ctx, async () => {
         requireRole(ctx, "manage:payroll");
 
+        if (!(await isLocaleEnabledForOrganization(ctx.organizationId, params.preferredLocale))) {
+          throw new Error("This document language is not enabled for the organization");
+        }
+
         const [created] = await db
           .insert(payrollEmployee)
           .values({
             organizationId: ctx.organizationId,
             name: params.name,
             email: params.email || null,
+            preferredLocale: params.preferredLocale ?? null,
             employeeNumber: params.employeeNumber,
             position: params.position || null,
             salary: params.salary,

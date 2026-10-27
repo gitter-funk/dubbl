@@ -43,6 +43,13 @@
       "when": 1793057283268,
       "tag": "0005_busy_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793073492208,
+      "tag": "0006_special_shinobi_shaw",
+      "breakpoints": true
     }
   ]
 }

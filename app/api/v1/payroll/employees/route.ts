@@ -9,10 +9,13 @@ import { notDeleted } from "@/lib/db/soft-delete";
 import { parsePagination, paginatedResponse } from "@/lib/api/pagination";
 import { z } from "zod";
 import { currencyCodeSchema } from "@/lib/currency/zod";
+import { locales } from "@/lib/i18n/locales";
+import { isLocaleEnabledForOrganization } from "@/lib/i18n/locale-policy";
 
 const createSchema = z.object({
   name: z.string().min(1),
   email: z.string().email().nullable().optional(),
+  preferredLocale: z.enum(locales).nullable().optional(),
   employeeNumber: z.string().min(1),
   position: z.string().nullable().optional(),
   salary: z.number().int().min(0),
@@ -80,6 +83,9 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const parsed = createSchema.parse(body);
+    if (!(await isLocaleEnabledForOrganization(ctx.organizationId, parsed.preferredLocale))) {
+      return NextResponse.json({ error: "This document language is not enabled for the organization" }, { status: 400 });
+    }
 
     const [created] = await db
       .insert(payrollEmployee)
@@ -87,6 +93,7 @@ export async function POST(request: Request) {
         organizationId: ctx.organizationId,
         name: parsed.name,
         email: parsed.email || null,
+        preferredLocale: parsed.preferredLocale ?? null,
         employeeNumber: parsed.employeeNumber,
         position: parsed.position || null,
         salary: parsed.salary,

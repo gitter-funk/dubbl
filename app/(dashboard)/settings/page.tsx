@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Check, ChevronsUpDown, Lock } from "lucide-react";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -38,6 +39,7 @@ import {
   getCountryByCode,
 } from "@/lib/data/business-types";
 import { Section } from "@/components/dashboard/section";
+import { localeLabels, locales, type AppLocale } from "@/lib/i18n/locales";
 
 interface OrgSettings {
   id: string;
@@ -45,6 +47,9 @@ interface OrgSettings {
   country: string | null;
   businessType: string | null;
   defaultCurrency: string;
+  documentLocale: AppLocale;
+  enabledLocales: AppLocale[];
+  availableLocales: AppLocale[];
   fiscalYearStartMonth: number;
   countryCode: string | null;
   taxId: string | null;
@@ -76,6 +81,8 @@ export default function SettingsPage() {
     country: "" as string,
     businessType: "" as string,
     defaultCurrency: "USD",
+    documentLocale: "en" as AppLocale,
+    enabledLocales: [...locales] as AppLocale[],
     fiscalYearStartMonth: "1",
     countryCode: "",
     taxId: "",
@@ -98,6 +105,7 @@ export default function SettingsPage() {
   const [lockSaving, setLockSaving] = useState(false);
   const [peppolId, setPeppolId] = useState("");
   const [peppolScheme, setPeppolScheme] = useState("");
+  const [availableLocales, setAvailableLocales] = useState<AppLocale[]>([...locales]);
 
   useDocumentTitle(t("pageTitle"));
 
@@ -127,6 +135,8 @@ export default function SettingsPage() {
       .then((data) => {
         if (data.organization) {
           const o = data.organization;
+          const supported = (data.availableLocales ?? locales) as AppLocale[];
+          setAvailableLocales(supported);
           setOrg(o);
           setPeppolId(o.peppolId || "");
           setPeppolScheme(o.peppolScheme || "");
@@ -135,6 +145,8 @@ export default function SettingsPage() {
             country: o.country ?? "",
             businessType: o.businessType ?? "",
             defaultCurrency: o.defaultCurrency,
+            documentLocale: o.documentLocale || "en",
+            enabledLocales: (o.enabledLocales || supported) as AppLocale[],
             fiscalYearStartMonth: String(o.fiscalYearStartMonth),
             countryCode: o.countryCode || "",
             taxId: o.taxId || "",
@@ -183,6 +195,8 @@ export default function SettingsPage() {
           country: form.country || null,
           businessType: form.businessType || null,
           defaultCurrency: form.defaultCurrency,
+          documentLocale: form.documentLocale,
+          enabledLocales: form.enabledLocales,
           fiscalYearStartMonth: parseInt(form.fiscalYearStartMonth),
           countryCode: form.countryCode || null,
           taxId: form.taxId || null,
@@ -506,6 +520,54 @@ export default function SettingsPage() {
                   <SelectItem key={paymentTerm.value} value={paymentTerm.value}>
                     {paymentTerm.value === "due_on_receipt" ? t("dueOnReceipt") : t("netDays", { days: paymentTerm.value.replace("net_", "") })}
                   </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </Section>
+
+      <div className="h-px bg-border" />
+
+      <Section title={t("documentLanguages")} description={t("documentLanguagesDescription")}>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs">{t("enabledDocumentLanguages")}</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {availableLocales.map((locale) => (
+                <label key={locale} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                  <Checkbox
+                    checked={form.enabledLocales.includes(locale)}
+                    disabled={locale === "en" || (form.enabledLocales.includes(locale) && form.enabledLocales.length === 1)}
+                    onCheckedChange={(checked) => {
+                      const enabledLocales = checked
+                        ? [...form.enabledLocales, locale]
+                        : form.enabledLocales.filter((value) => value !== locale);
+                      setForm({
+                        ...form,
+                        enabledLocales,
+                        documentLocale: enabledLocales.includes(form.documentLocale)
+                          ? form.documentLocale
+                          : enabledLocales[0] || "en",
+                      });
+                    }}
+                  />
+                  {localeLabels[locale]}
+                </label>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">{t("documentLanguagesHelp")}</p>
+          </div>
+          <div className="max-w-sm space-y-1.5">
+            <Label className="text-xs">{t("defaultDocumentLanguage")}</Label>
+            <Select
+              value={form.documentLocale}
+              onValueChange={(value) => setForm({ ...form, documentLocale: value as AppLocale })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {form.enabledLocales.map((locale) => (
+                  <SelectItem key={locale} value={locale}>{localeLabels[locale]}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

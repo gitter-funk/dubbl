@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSiteAdmin } from "@/lib/api/require-site-admin";
 import { getAllSiteSettings, setSiteSetting } from "@/lib/site-settings";
+import { locales } from "@/lib/i18n/locales";
 import { z } from "zod";
 
 export async function GET() {
@@ -22,6 +23,11 @@ const updateSchema = z.object({
   allowed_email_domains: z.string().optional(),
   allow_user_org_creation: z.enum(["true", "false"]).optional(),
   self_hosted_unlimited: z.enum(["true", "false", "auto"]).optional(),
+  enabled_locales: z.string().refine((value) => {
+    const values = value.split(",").map((locale) => locale.trim()).filter(Boolean);
+    return values.includes("en") && new Set(values).size === values.length &&
+      values.every((locale) => locales.includes(locale as (typeof locales)[number]));
+  }, "Enabled locales must be unique supported tags and include en").optional(),
 });
 
 export async function PATCH(request: Request) {

@@ -220,6 +220,7 @@ export const payrollEmployee = pgTable("payroll_employee", {
   memberId: uuid("member_id").references(() => member.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   email: text("email"),
+  preferredLocale: text("preferred_locale"),
   employeeNumber: text("employee_number").notNull(),
   position: text("position"),
   department: text("department"),

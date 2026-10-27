@@ -59,6 +59,8 @@ export async function GET(
         phone: org?.contactPhone || null,
         email: org?.contactEmail || null,
         countryCode: org?.countryCode || null,
+        documentLocale: org?.documentLocale,
+        enabledLocales: org?.enabledLocales,
       };
     }
 
@@ -91,6 +93,7 @@ export async function GET(
         email: recipient?.email ?? inv.contact?.email ?? null,
         address: contactAddress,
         taxNumber: recipient?.taxNumber ?? inv.contact?.taxNumber ?? null,
+        preferredLocale: inv.contact?.preferredLocale,
       },
       template || {}
     );
