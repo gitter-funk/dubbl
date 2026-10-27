@@ -2173,6 +2173,64 @@
         "box5MedicareWages": "Box 5 - Medicare wages and tips",
         "box6MedicareTax": "Box 6 - Medicare tax withheld"
       }
+    },
+    "TaxLiabilities": {
+      "pageTitle": "Payroll · Tax Liabilities",
+      "title": "Payroll tax liabilities",
+      "description": "What payroll taxes you owe from completed pay runs, who to pay, and a record of payments you've made.",
+      "recordPayment": "Record payment",
+      "owedFromPayRuns": "Owed from pay runs",
+      "paidSoFar": "Paid so far",
+      "stillOutstanding": "Still outstanding",
+      "whoYouPay": "Who you pay",
+      "paidToDate": "Paid to date",
+      "outstandingNotice": "{amount} of withheld payroll tax has not been remitted yet. Record a payment when you pay it so your books match what's actually left to pay.",
+      "paymentsRecorded": "Payments recorded",
+      "noPayments": "No payroll tax payments recorded yet.",
+      "sheetTitle": "Record a payroll tax payment",
+      "sheetDescription": "Logs the payment and clears the matching liability against your bank in the books.",
+      "payee": "Who you're paying",
+      "amountPaid": "Amount paid",
+      "periodFrom": "Period from",
+      "periodTo": "Period to",
+      "start": "Start",
+      "end": "End",
+      "level": "Level",
+      "paidOn": "Paid on",
+      "paymentDate": "Payment date",
+      "reference": "Reference",
+      "referencePlaceholder": "Confirmation / EFTPS number",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional note about this payment",
+      "recording": "Recording...",
+      "cancel": "Cancel",
+      "amountMustBePositive": "Enter an amount greater than zero",
+      "choosePeriod": "Choose the period this payment covers",
+      "recordFailed": "Could not record payment",
+      "paymentRecorded": "Payment recorded",
+      "periodCovered": "Period covered",
+      "covers": "Covers",
+      "payrollTax": "Payroll tax",
+      "amount": "Amount",
+      "jurisdictions": {
+        "federal": "Federal",
+        "state": "State",
+        "local": "Local"
+      },
+      "agencies": {
+        "income_tax": {
+          "name": "Tax authority — income tax",
+          "description": "Income tax withheld from employee pay"
+        },
+        "fica": {
+          "name": "Tax authority — payroll taxes",
+          "description": "Social Security, Medicare & unemployment"
+        },
+        "pension": {
+          "name": "Pension & benefits provider",
+          "description": "Retirement & benefit amounts withheld"
+        }
+      }
     }
   }
 }

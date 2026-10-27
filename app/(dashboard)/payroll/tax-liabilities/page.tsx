@@ -38,6 +38,7 @@ import { BrandLoader } from "@/components/dashboard/brand-loader";
 import { ContentReveal } from "@/components/ui/content-reveal";
 import { formatMoney } from "@/lib/money";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
+import { useLocale, useTranslations } from "next-intl";
 
 // ─── What payroll taxes look like by who you pay ────────────────────────────
 // The remittance API (POST /api/v1/payroll/tax-payments) clears one of three
@@ -89,12 +90,6 @@ interface TaxPayment {
   createdAt: string;
 }
 
-const jurisdictionLabels: Record<string, string> = {
-  federal: "Federal",
-  state: "State",
-  local: "Local",
-};
-
 function todayISO() {
   return new Date().toISOString().split("T")[0];
 }
@@ -106,7 +101,9 @@ function monthStartISO() {
 }
 
 export default function TaxLiabilitiesPage() {
-  useDocumentTitle("Payroll · Tax Liabilities");
+  const t = useTranslations("Payroll.TaxLiabilities");
+  const locale = useLocale();
+  useDocumentTitle(t("pageTitle"));
 
   const orgId =
     typeof window !== "undefined" ? localStorage.getItem("activeOrgId") : null;
@@ -179,11 +176,11 @@ export default function TaxLiabilitiesPage() {
     if (!orgId) return;
     const cents = Math.round(parseFloat(formAmount || "0") * 100);
     if (!cents || cents <= 0) {
-      toast.error("Enter an amount greater than zero");
+      toast.error(t("amountMustBePositive"));
       return;
     }
     if (!formPeriodStart || !formPeriodEnd) {
-      toast.error("Choose the period this payment covers");
+      toast.error(t("choosePeriod"));
       return;
     }
 
@@ -210,17 +207,18 @@ export default function TaxLiabilitiesPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error || "Could not record payment");
+        throw new Error(data?.error || t("recordFailed"));
       }
-      toast.success("Payment recorded");
+      toast.success(t("paymentRecorded"));
       setSheetOpen(false);
       setRefreshKey((k) => k + 1);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not record payment");
+      toast.error(err instanceof Error ? err.message : t("recordFailed"));
     } finally {
       setSubmitting(false);
     }
   }, [
+    t,
     orgId,
     formAmount,
     formBucket,
@@ -250,7 +248,7 @@ export default function TaxLiabilitiesPage() {
     () => [
       {
         key: "period",
-        header: "Period covered",
+        header: t("periodCovered"),
         render: (r) => (
           <span className="text-sm">
             {r.periodStart} → {r.periodEnd}
@@ -259,30 +257,30 @@ export default function TaxLiabilitiesPage() {
       },
       {
         key: "kind",
-        header: "Covers",
+        header: t("covers"),
         render: (r) => {
           const matched = AGENCY_BUCKETS.find((b) => b.taxKind === r.taxKind);
           return (
             <span className="text-sm">
-              {matched?.agency ?? r.taxKind ?? "Payroll tax"}
+              {matched ? t(`agencies.${matched.bucket}.name`) : r.taxKind ?? t("payrollTax")}
             </span>
           );
         },
       },
       {
         key: "jurisdiction",
-        header: "Level",
+        header: t("level"),
         className: "w-24",
         render: (r) => (
           <Badge variant="outline">
-            {jurisdictionLabels[r.jurisdictionLevel] || r.jurisdictionLevel}
+            {t.has(`jurisdictions.${r.jurisdictionLevel}`) ? t(`jurisdictions.${r.jurisdictionLevel}`) : r.jurisdictionLevel}
             {r.jurisdiction ? ` · ${r.jurisdiction}` : ""}
           </Badge>
         ),
       },
       {
         key: "reference",
-        header: "Reference",
+        header: t("reference"),
         className: "w-40",
         render: (r) => (
           <span className="font-mono text-xs text-muted-foreground">
@@ -292,17 +290,17 @@ export default function TaxLiabilitiesPage() {
       },
       {
         key: "paid",
-        header: "Paid on",
+        header: t("paidOn"),
         className: "w-28",
         render: (r) => (
           <span className="text-sm">
-            {r.paidAt ? r.paidAt.split("T")[0] : "-"}
+            {r.paidAt ? new Date(r.paidAt).toLocaleDateString(locale) : "-"}
           </span>
         ),
       },
       {
         key: "amount",
-        header: "Amount",
+        header: t("amount"),
         className: "w-28 text-right",
         render: (r) => (
           <span className="font-mono text-sm tabular-nums">
@@ -311,7 +309,7 @@ export default function TaxLiabilitiesPage() {
         ),
       },
     ],
-    [],
+    [locale, t],
   );
 
   if (initialLoad) return <BrandLoader />;
@@ -322,11 +320,10 @@ export default function TaxLiabilitiesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">
-            Payroll tax liabilities
+            {t("title")}
           </h2>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            What payroll taxes you owe from completed pay runs, who to pay, and a
-            record of payments you&apos;ve made.
+            {t("description")}
           </p>
         </div>
         <Button
@@ -334,25 +331,25 @@ export default function TaxLiabilitiesPage() {
           className="bg-emerald-600 shrink-0 hover:bg-emerald-700"
         >
           <Plus className="mr-2 size-4" />
-          Record payment
+          {t("recordPayment")}
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard
-          title="Owed from pay runs"
-          value={formatMoney(accruedTax)}
+          title={t("owedFromPayRuns")}
+          value={formatMoney(accruedTax, undefined, locale)}
           icon={Receipt}
         />
         <StatCard
-          title="Paid so far"
-          value={formatMoney(totalPaid)}
+          title={t("paidSoFar")}
+          value={formatMoney(totalPaid, undefined, locale)}
           icon={CheckCircle2}
         />
         <StatCard
-          title="Still outstanding"
-          value={formatMoney(outstanding)}
+          title={t("stillOutstanding")}
+          value={formatMoney(outstanding, undefined, locale)}
           icon={Wallet}
         />
       </div>
@@ -363,7 +360,7 @@ export default function TaxLiabilitiesPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Landmark className="size-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Who you pay</h3>
+          <h3 className="text-sm font-semibold">{t("whoYouPay")}</h3>
         </div>
         <div className="grid gap-3 lg:grid-cols-3">
           {AGENCY_BUCKETS.map((b) => {
@@ -374,14 +371,14 @@ export default function TaxLiabilitiesPage() {
                 className="flex flex-col justify-between rounded-xl border bg-card p-4"
               >
                 <div>
-                  <p className="text-sm font-medium">{b.agency}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{b.what}</p>
+                <p className="text-sm font-medium">{t(`agencies.${b.bucket}.name`)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t(`agencies.${b.bucket}.description`)}</p>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-xs text-muted-foreground">
-                    Paid to date
+                    {t("paidToDate")}
                     <span className="ml-1.5 font-mono tabular-nums text-foreground">
-                      {formatMoney(paid)}
+                      {formatMoney(paid, undefined, locale)}
                     </span>
                   </div>
                   <Button
@@ -389,7 +386,7 @@ export default function TaxLiabilitiesPage() {
                     variant="outline"
                     onClick={() => openRecordPayment(b.bucket)}
                   >
-                    Record payment
+                    {t("recordPayment")}
                   </Button>
                 </div>
               </div>
@@ -400,9 +397,7 @@ export default function TaxLiabilitiesPage() {
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
             <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
             <span>
-              {formatMoney(outstanding)} of withheld payroll tax has not been
-              remitted yet. Record a payment when you pay it so your books match
-              what&apos;s actually left to pay.
+              {t("outstandingNotice", { amount: formatMoney(outstanding, undefined, locale) })}
             </span>
           </div>
         )}
@@ -412,12 +407,12 @@ export default function TaxLiabilitiesPage() {
 
       {/* Payment history */}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Payments recorded</h3>
+        <h3 className="text-sm font-semibold">{t("paymentsRecorded")}</h3>
         <DataTable
           columns={paymentColumns}
           data={payments}
           loading={false}
-          emptyMessage="No payroll tax payments recorded yet."
+          emptyMessage={t("noPayments")}
         />
       </div>
 
@@ -425,16 +420,15 @@ export default function TaxLiabilitiesPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="flex w-full flex-col sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>Record a payroll tax payment</SheetTitle>
+            <SheetTitle>{t("sheetTitle")}</SheetTitle>
             <SheetDescription>
-              Logs the payment and clears the matching liability against your bank
-              in the books.
+              {t("sheetDescription")}
             </SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-4 overflow-y-auto px-4">
             <div className="space-y-1.5">
-              <Label>Who you&apos;re paying</Label>
+              <Label>{t("payee")}</Label>
               <Select value={formBucket} onValueChange={setFormBucket}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -442,7 +436,7 @@ export default function TaxLiabilitiesPage() {
                 <SelectContent>
                   {AGENCY_BUCKETS.map((b) => (
                     <SelectItem key={b.bucket} value={b.bucket}>
-                      {b.agency}
+                      {t(`agencies.${b.bucket}.name`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -450,7 +444,7 @@ export default function TaxLiabilitiesPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Amount paid</Label>
+              <Label>{t("amountPaid")}</Label>
               <CurrencyInput
                 value={formAmount}
                 onChange={setFormAmount}
@@ -460,26 +454,26 @@ export default function TaxLiabilitiesPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Period from</Label>
+                <Label>{t("periodFrom")}</Label>
                 <DatePicker
                   value={formPeriodStart}
                   onChange={setFormPeriodStart}
-                  placeholder="Start"
+                  placeholder={t("start")}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Period to</Label>
+                <Label>{t("periodTo")}</Label>
                 <DatePicker
                   value={formPeriodEnd}
                   onChange={setFormPeriodEnd}
-                  placeholder="End"
+                  placeholder={t("end")}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Level</Label>
+                <Label>{t("level")}</Label>
                 <Select
                   value={formJurisdiction}
                   onValueChange={(v) =>
@@ -490,37 +484,37 @@ export default function TaxLiabilitiesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="federal">Federal</SelectItem>
-                    <SelectItem value="state">State</SelectItem>
-                    <SelectItem value="local">Local</SelectItem>
+                    <SelectItem value="federal">{t("jurisdictions.federal")}</SelectItem>
+                    <SelectItem value="state">{t("jurisdictions.state")}</SelectItem>
+                    <SelectItem value="local">{t("jurisdictions.local")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Paid on</Label>
+                <Label>{t("paidOn")}</Label>
                 <DatePicker
                   value={formPaymentDate}
                   onChange={setFormPaymentDate}
-                  placeholder="Payment date"
+                  placeholder={t("paymentDate")}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label>Reference</Label>
+              <Label>{t("reference")}</Label>
               <Input
                 value={formReference}
                 onChange={(e) => setFormReference(e.target.value)}
-                placeholder="Confirmation / EFTPS number"
+                placeholder={t("referencePlaceholder")}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label>Notes</Label>
+              <Label>{t("notes")}</Label>
               <Textarea
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
-                placeholder="Optional note about this payment"
+                placeholder={t("notesPlaceholder")}
                 rows={3}
               />
             </div>
@@ -532,14 +526,14 @@ export default function TaxLiabilitiesPage() {
               disabled={submitting}
               className="bg-emerald-600 hover:bg-emerald-700"
             >
-              {submitting ? "Recording..." : "Record payment"}
+              {submitting ? t("recording") : t("recordPayment")}
             </Button>
             <Button
               variant="outline"
               onClick={() => setSheetOpen(false)}
               disabled={submitting}
             >
-              Cancel
+              {t("cancel")}
             </Button>
           </SheetFooter>
         </SheetContent>
