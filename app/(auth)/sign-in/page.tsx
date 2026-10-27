@@ -247,7 +247,7 @@ function SignInContent() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t("emailPlaceholder")}
             required
             autoFocus
             className="h-11 rounded-lg"

@@ -10,7 +10,9 @@
     "trigger:dev": "trigger dev",
     "trigger:deploy": "trigger deploy",
     "lint": "eslint",
-    "test": "node --import tsx --test tests/*.test.ts",
+    "test": "pnpm test:unit && pnpm test:ui",
+    "test:unit": "node --import tsx --test tests/*.test.ts",
+    "test:ui": "node scripts/run-ui-tests.mjs",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "tsx scripts/db-migrate.ts",
@@ -66,6 +68,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",

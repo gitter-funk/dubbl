@@ -22,6 +22,16 @@ function message(locale: string, key: string): string {
   return value as string;
 }
 
+test("dashboard content can shrink beside the sidebar at tablet widths", () => {
+  const layout = source("app/(dashboard)/layout.tsx");
+
+  assert.match(
+    layout,
+    /<SidebarInset className="min-w-0 bg-content-bg">/,
+    "allow the dashboard main region to shrink when translated header controls need more room",
+  );
+});
+
 test("forecasting keeps long localized form labels in roomy responsive columns", () => {
   const page = source("app/(dashboard)/payroll/forecasting/page.tsx");
   const englishLabel = message("en", "Payroll.Forecasting.averageNewHireSalary");
