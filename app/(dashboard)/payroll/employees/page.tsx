@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { motion, MotionConfig } from "motion/react";
 import {
   Users,
@@ -47,11 +48,11 @@ interface Employee {
 type StatusFilter = "all" | "active" | "inactive";
 type SortKey = "name" | "number" | "salary" | "startDate";
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "name", label: "Name" },
-  { value: "number", label: "Employee #" },
-  { value: "salary", label: "Salary" },
-  { value: "startDate", label: "Start Date" },
+const SORT_OPTIONS: { value: SortKey; key: "sort.name" | "sort.number" | "sort.salary" | "sort.startDate" }[] = [
+  { value: "name", key: "sort.name" },
+  { value: "number", key: "sort.number" },
+  { value: "salary", key: "sort.salary" },
+  { value: "startDate", key: "sort.startDate" },
 ];
 
 function getInitials(name: string) {
@@ -65,6 +66,8 @@ function getInitials(name: string) {
 }
 
 export default function EmployeesPage() {
+  const t = useTranslations("Payroll.Employees");
+  const locale = useLocale();
   const router = useRouter();
   const { open: openDrawer } = useCreateDrawer();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -79,7 +82,7 @@ export default function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState<SortKey>("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  useDocumentTitle("Payroll · Employees");
+  useDocumentTitle(t("pageTitle"));
 
   const fetchEmployees = useCallback(() => {
     const orgId = localStorage.getItem("activeOrgId");
@@ -197,7 +200,7 @@ export default function EmployeesPage() {
               transition={{ duration: 0.4, delay: 0.35 }}
               className="text-lg font-semibold"
             >
-              Build your team
+              {t("buildTeam")}
             </motion.h3>
             <motion.p
               initial={{ opacity: 0, y: 8 }}
@@ -205,7 +208,7 @@ export default function EmployeesPage() {
               transition={{ duration: 0.4, delay: 0.4 }}
               className="mt-2 max-w-sm text-sm text-muted-foreground text-center leading-relaxed"
             >
-              Add employees with their compensation details, pay frequency, and tax information to start managing payroll.
+              {t("buildTeamDescription")}
             </motion.p>
 
             <motion.div
@@ -220,7 +223,7 @@ export default function EmployeesPage() {
                 className="bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20"
               >
                 <Plus className="mr-2 size-4" />
-                Add Employee
+                {t("addEmployee")}
               </Button>
             </motion.div>
           </div>
@@ -258,9 +261,9 @@ export default function EmployeesPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
             <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="inactive">Inactive</TabsTrigger>
+              <TabsTrigger value="all">{t("all")}</TabsTrigger>
+              <TabsTrigger value="active">{t("active")}</TabsTrigger>
+              <TabsTrigger value="inactive">{t("inactive")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -270,7 +273,7 @@ export default function EmployeesPage() {
             onClick={() => openDrawer("employee")}
           >
             <Plus className="size-3" />
-            Add Employee
+            {t("addEmployee")}
           </Button>
         </div>
 
@@ -279,7 +282,7 @@ export default function EmployeesPage() {
           <div className="relative flex-1 sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name, number, or position..."
+              placeholder={t("searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 pr-8 h-8 text-sm"
@@ -301,7 +304,7 @@ export default function EmployeesPage() {
             </SelectTrigger>
             <SelectContent>
               {SORT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                <SelectItem key={opt.value} value={opt.value}>{t(opt.key)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -315,7 +318,7 @@ export default function EmployeesPage() {
       {/* Employee list */}
       {refetching || pendingSearch ? (
         <div className="flex items-center justify-center py-20">
-          <div className="brand-loader" aria-label="Loading">
+          <div className="brand-loader" aria-label={t("loading")}>
             <div className="brand-loader-circle brand-loader-circle-1" />
             <div className="brand-loader-circle brand-loader-circle-2" />
           </div>
@@ -326,9 +329,9 @@ export default function EmployeesPage() {
             <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted mb-3">
               <Users className="size-5 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">No employees found</p>
+            <p className="text-sm font-medium">{t("noEmployeesFound")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {search ? "Try a different search term" : "No employees match this filter"}
+              {search ? t("tryDifferentSearch") : t("noEmployeesMatchFilter")}
             </p>
           </div>
         </ContentReveal>
@@ -363,10 +366,10 @@ export default function EmployeesPage() {
                   <div className="flex items-center gap-3 shrink-0">
                     <div className="hidden sm:block text-right">
                       <p className="text-xs text-muted-foreground font-mono">{emp.employeeNumber}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{emp.payFrequency}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{t(`frequencies.${emp.payFrequency}` as "frequencies.weekly" | "frequencies.biweekly" | "frequencies.monthly")}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-mono tabular-nums">{formatMoney(emp.salary, emp.currency ?? "USD")}</p>
+                      <p className="text-sm font-mono tabular-nums">{formatMoney(emp.salary, emp.currency ?? "USD", locale)}</p>
                     </div>
                     <Badge
                       variant="outline"
@@ -377,7 +380,7 @@ export default function EmployeesPage() {
                           : "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300"
                       )}
                     >
-                      {emp.isActive ? "Active" : "Inactive"}
+                      {emp.isActive ? t("active") : t("inactive")}
                     </Badge>
                   </div>
                 </button>
