@@ -1556,6 +1556,34 @@
       "cancel": "Annuler",
       "creating": "Création…",
       "submitRequest": "Soumettre la demande"
+    },
+    "Timesheets": {
+      "pageTitle": "Paie · Feuilles de temps",
+      "created": "Feuille de temps créée",
+      "createFailed": "Échec de la création de la feuille de temps",
+      "title": "Feuilles de temps",
+      "description": "Suivez et gérez les heures travaillées par les employés.",
+      "all": "Toutes",
+      "statuses": {
+        "draft": "Brouillon",
+        "submitted": "Soumise",
+        "approved": "Approuvée",
+        "rejected": "Rejetée"
+      },
+      "newTimesheet": "Nouvelle feuille de temps",
+      "searchPlaceholder": "Rechercher…",
+      "noTimesheets": "Aucune feuille de temps trouvée",
+      "emptyDescription": "Créez une feuille de temps pour commencer à suivre les heures",
+      "unknownEmployee": "Inconnu",
+      "to": "au",
+      "hours": "{count} h",
+      "employee": "Employé",
+      "selectEmployee": "Sélectionner un employé…",
+      "periodStart": "Début de la période",
+      "periodEnd": "Fin de la période",
+      "cancel": "Annuler",
+      "creating": "Création…",
+      "create": "Créer"
     }
   }
 }

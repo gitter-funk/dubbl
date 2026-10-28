@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, MotionConfig } from "motion/react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Clock, Plus, Search, X } from "lucide-react";
+import { Clock, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function TimesheetsPage() {
+  const t = useTranslations("Payroll.Timesheets");
+  const locale = useLocale();
   const router = useRouter();
   const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function TimesheetsPage() {
   const [creating, setCreating] = useState(false);
   const [newTs, setNewTs] = useState({ employeeId: "", periodStart: "", periodEnd: "" });
   const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
-  useDocumentTitle("Payroll · Timesheets");
+  useDocumentTitle(t("pageTitle"));
 
   const orgId = typeof window !== "undefined" ? localStorage.getItem("activeOrgId") : null;
 
@@ -94,12 +96,12 @@ export default function TimesheetsPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        toast.success("Timesheet created");
+        toast.success(t("created"));
         setDialogOpen(false);
         router.push(`/payroll/timesheets/${data.timesheet.id}`);
       }
     } catch {
-      toast.error("Failed to create timesheet");
+      toast.error(t("createFailed"));
     } finally {
       setCreating(false);
     }
@@ -109,28 +111,28 @@ export default function TimesheetsPage() {
 
   return (
     <ContentReveal className="space-y-6">
-      <PageHeader title="Timesheets" description="Track and manage employee work hours." />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
             <TabsList className="flex-wrap">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="draft">Draft</TabsTrigger>
-              <TabsTrigger value="submitted">Submitted</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsTrigger value="all">{t("all")}</TabsTrigger>
+              <TabsTrigger value="draft">{t("statuses.draft")}</TabsTrigger>
+              <TabsTrigger value="submitted">{t("statuses.submitted")}</TabsTrigger>
+              <TabsTrigger value="approved">{t("statuses.approved")}</TabsTrigger>
+              <TabsTrigger value="rejected">{t("statuses.rejected")}</TabsTrigger>
             </TabsList>
           </Tabs>
           <Button size="sm" className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => setDialogOpen(true)}>
             <Plus className="size-3" />
-            New Timesheet
+            {t("newTimesheet")}
           </Button>
         </div>
 
         <div className="relative sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm" />
+          <Input placeholder={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm" />
         </div>
       </div>
 
@@ -139,8 +141,8 @@ export default function TimesheetsPage() {
           <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted mb-3">
             <Clock className="size-5 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium">No timesheets found</p>
-          <p className="text-xs text-muted-foreground mt-1">Create a timesheet to start tracking hours</p>
+          <p className="text-sm font-medium">{t("noTimesheets")}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t("emptyDescription")}</p>
         </div>
       ) : (
         <div className="rounded-xl border bg-card divide-y">
@@ -155,14 +157,14 @@ export default function TimesheetsPage() {
                   <Clock className="size-4 text-muted-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{ts.employee?.name || "Unknown"}</p>
-                  <p className="text-xs text-muted-foreground">{ts.periodStart} to {ts.periodEnd}</p>
+                  <p className="text-sm font-medium truncate">{ts.employee?.name || t("unknownEmployee")}</p>
+                  <p className="text-xs text-muted-foreground">{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${ts.periodStart}T12:00:00Z`))} {t("to")} {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${ts.periodEnd}T12:00:00Z`))}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span className="text-sm font-mono tabular-nums">{ts.totalHours}h</span>
+                <span className="text-sm font-mono tabular-nums">{t("hours", { count: new Intl.NumberFormat(locale).format(ts.totalHours) })}</span>
                 <Badge variant="outline" className={cn("text-[11px]", statusColors[ts.status] || "")}>
-                  {ts.status}
+                  {t(`statuses.${ts.status}` as "statuses.draft" | "statuses.submitted" | "statuses.approved" | "statuses.rejected")}
                 </Badge>
               </div>
             </button>
@@ -172,16 +174,16 @@ export default function TimesheetsPage() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>New Timesheet</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("newTimesheet")}</DialogTitle></DialogHeader>
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label>Employee</Label>
+              <Label>{t("employee")}</Label>
               <select
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                 value={newTs.employeeId}
                 onChange={(e) => setNewTs({ ...newTs, employeeId: e.target.value })}
               >
-                <option value="">Select employee...</option>
+                <option value="">{t("selectEmployee")}</option>
                 {employees.map((e) => (
                   <option key={e.id} value={e.id}>{e.name}</option>
                 ))}
@@ -189,19 +191,19 @@ export default function TimesheetsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Period Start</Label>
+                <Label>{t("periodStart")}</Label>
                 <Input type="date" value={newTs.periodStart} onChange={(e) => setNewTs({ ...newTs, periodStart: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Period End</Label>
+                <Label>{t("periodEnd")}</Label>
                 <Input type="date" value={newTs.periodEnd} onChange={(e) => setNewTs({ ...newTs, periodEnd: e.target.value })} />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("cancel")}</Button>
             <Button onClick={handleCreate} disabled={creating} className="bg-emerald-600 hover:bg-emerald-700">
-              {creating ? "Creating..." : "Create"}
+              {creating ? t("creating") : t("create")}
             </Button>
           </DialogFooter>
         </DialogContent>

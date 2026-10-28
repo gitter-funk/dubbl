@@ -1819,6 +1819,34 @@
       "cancel": "Cancel",
       "creating": "Creating…",
       "submitRequest": "Submit request"
+    },
+    "Timesheets": {
+      "pageTitle": "Payroll · Timesheets",
+      "created": "Timesheet created",
+      "createFailed": "Failed to create timesheet",
+      "title": "Timesheets",
+      "description": "Track and manage employee work hours.",
+      "all": "All",
+      "statuses": {
+        "draft": "Draft",
+        "submitted": "Submitted",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "newTimesheet": "New timesheet",
+      "searchPlaceholder": "Search...",
+      "noTimesheets": "No timesheets found",
+      "emptyDescription": "Create a timesheet to start tracking hours",
+      "unknownEmployee": "Unknown",
+      "to": "to",
+      "hours": "{count}h",
+      "employee": "Employee",
+      "selectEmployee": "Select employee...",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "cancel": "Cancel",
+      "creating": "Creating…",
+      "create": "Create"
     }
   }
 }
