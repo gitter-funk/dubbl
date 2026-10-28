@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { mergeMessages } from "../lib/i18n/merge-messages";
-import { getLocaleCatalogLocale } from "../lib/i18n/locales";
+import { getLocaleCatalogLocale, resolveLocale } from "../lib/i18n/locales";
 
 type CatalogValue = string | { [key: string]: CatalogValue };
 type Catalog = Record<string, CatalogValue>;
@@ -217,6 +217,19 @@ test("Simplified Chinese UI messages resolve for Chinese Simplified locales", ()
   assert.equal(chinese.get("Navigation.settings"), "设置");
   assert.equal(resolved.get("Navigation.payroll"), "工资");
   assert.equal(getLocaleCatalogLocale("zh-Hans"), "zh-Hans");
+});
+
+test("Traditional Chinese UI messages resolve for Taiwan locales", () => {
+  const chinese = leafValues(loadCatalog("zh-Hant"));
+  const resolved = leafValues(
+    mergeMessages(loadCatalog("en"), loadCatalog("zh-Hant")) as CatalogValue,
+  );
+
+  assert.equal(chinese.get("Navigation.dashboard"), "控制台");
+  assert.equal(chinese.get("Navigation.settings"), "設定");
+  assert.equal(resolved.get("Navigation.payroll"), "薪資");
+  assert.equal(getLocaleCatalogLocale("zh-Hant"), "zh-Hant");
+  assert.equal(resolveLocale("zh-TW"), "zh-Hant");
 });
 
 test("nested locale fallback preserves English and French values under regional overrides", () => {
