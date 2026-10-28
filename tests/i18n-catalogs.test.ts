@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { mergeMessages } from "../lib/i18n/merge-messages";
+import { getLocaleCatalogLocale } from "../lib/i18n/locales";
 
 type CatalogValue = string | { [key: string]: CatalogValue };
 type Catalog = Record<string, CatalogValue>;
@@ -136,6 +137,15 @@ test("German UI messages are translated and Swiss spelling overrides inherit", (
   );
   assert.equal(swiss.get("Settings.General.street"), "Strasse");
   assert.equal(resolved.get("Settings.ApiKeys.createdOn"), german.get("Settings.ApiKeys.createdOn"));
+});
+
+test("Spanish UI messages are translated and Mexico resolves to the Spanish catalog", () => {
+  const spanish = leafValues(loadCatalog("es"));
+
+  assert.equal(spanish.get("Navigation.dashboard"), "Panel de control");
+  assert.equal(spanish.get("Navigation.payroll"), "Nóminas");
+  assert.equal(spanish.get("Sales.Quotes.newQuote"), "Nuevo presupuesto");
+  assert.equal(getLocaleCatalogLocale("es-MX"), "es");
 });
 
 test("nested locale fallback preserves English and French values under regional overrides", () => {
