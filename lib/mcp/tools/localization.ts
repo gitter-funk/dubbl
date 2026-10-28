@@ -30,10 +30,10 @@ export function registerLocalizationTools(server: McpServer, ctx: AuthContext) {
 
   server.tool(
     "update_locale_preferences",
-    "Update the caller's UI language and/or the organization's customer-facing document language. Use BCP 47 locale tags en, fr, or fr-CA. Returns the resulting preferences.",
+    `Update the caller's UI language and/or the organization's customer-facing document language. Use one of these BCP 47 locale tags: ${locales.join(", ")}. Returns the resulting preferences.`,
     {
-      userLocale: z.enum(locales).optional().describe("UI language for the authenticated user: en, fr, or fr-CA"),
-      documentLocale: z.enum(locales).optional().describe("Default language for organization customer-facing documents: en, fr, or fr-CA"),
+      userLocale: z.enum(locales).optional().describe(`UI locale for the authenticated user. Supported tags: ${locales.join(", ")}`),
+      documentLocale: z.enum(locales).optional().describe(`Default locale for organization customer-facing documents. Supported tags: ${locales.join(", ")}`),
       enabledLocales: z.array(z.enum(locales)).min(1).optional().describe("Locales the organization allows for UI and customer-facing documents; must be supported by the hosted instance"),
     },
     (params) => wrapTool(ctx, async () => {

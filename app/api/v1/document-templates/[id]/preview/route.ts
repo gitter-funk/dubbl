@@ -48,7 +48,7 @@ export async function POST(
         ytdGross: 1500000,
         ytdTax: 255000,
         ytdNet: 1200000,
-        deductionLines: [{ name: locale === "en" ? "Health benefits" : "Assurance maladie", amount: 15000 }],
+        deductionLines: [{ name: locale.startsWith("fr") ? "Assurance maladie" : "Health benefits", amount: 15000 }],
       }, locale, template);
       return new NextResponse(pdfBuffer, {
         headers: {

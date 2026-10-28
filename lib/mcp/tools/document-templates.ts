@@ -28,11 +28,11 @@ export function registerDocumentTemplateTools(server: McpServer, ctx: AuthContex
 
   server.tool(
     "create_document_template",
-    "Create an organization document template for a specific locale. Set isDefault to use it for documents of this type and locale. Supported locales are en, fr, and fr-CA.",
+    `Create an organization document template for a specific locale. Set isDefault to use it for documents of this type and locale. Supported locale tags: ${locales.join(", ")}.`,
     {
       name: z.string().min(1).describe("Display name of the template"),
       type: z.enum(templateTypes).describe("Document type rendered by this template"),
-      locale: z.enum(locales).default("en").describe("BCP 47 locale for this template: en, fr, or fr-CA"),
+      locale: z.enum(locales).default("en").describe(`BCP 47 locale for this template. Supported tags: ${locales.join(", ")}`),
       isDefault: z.boolean().optional().describe("Whether this should be the default template for this document type and locale"),
       accentColor: z.string().optional().describe("Hex accent color used in the generated document"),
       notes: z.string().nullable().optional().describe("Optional localized notes shown on documents; null clears notes"),
@@ -78,7 +78,7 @@ export function registerDocumentTemplateTools(server: McpServer, ctx: AuthContex
     {
       templateId: z.string().uuid().describe("UUID of the organization document template to update"),
       name: z.string().min(1).optional().describe("New display name for the template"),
-      locale: z.enum(locales).optional().describe("New BCP 47 locale for this template: en, fr, or fr-CA"),
+      locale: z.enum(locales).optional().describe(`New BCP 47 locale for this template. Supported tags: ${locales.join(", ")}`),
       isDefault: z.boolean().optional().describe("Whether this is the default template for this document type and locale"),
       accentColor: z.string().optional().describe("Hex accent color used in the generated document"),
       notes: z.string().nullable().optional().describe("Localized notes; null clears notes"),

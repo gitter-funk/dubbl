@@ -1,0 +1,1 @@
+ALTER TABLE "organization" ALTER COLUMN "enabled_locales" SET DEFAULT '{"en","en-GB","en-US","en-AU","en-NZ","en-CA","fr","fr-CA","de-DE","de-AT","de-CH","es-ES","es-MX","it-IT","pt-PT","pt-BR","zh-Hans","zh-Hant"}';

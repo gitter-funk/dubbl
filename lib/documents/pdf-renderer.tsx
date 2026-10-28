@@ -10,6 +10,7 @@ import {
   Path,
   Link,
 } from "@react-pdf/renderer";
+import type { AppLocale } from "@/lib/i18n/locales";
 
 export interface OrgInfo {
   name: string;
@@ -74,10 +75,10 @@ function getTaxIdLabel(countryCode?: string | null, locale = "en"): string {
     "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL",
     "PL", "PT", "RO", "SK", "SI", "ES", "SE",
   ];
-  if (EU.includes(cc) || cc === "GB") return locale === "en" ? "VAT" : "TVA";
+  if (EU.includes(cc) || cc === "GB") return locale.startsWith("fr") ? "TVA" : "VAT";
   if (cc === "AU") return "ABN";
   if (cc === "NZ") return "GST";
-  if (cc === "CA") return locale === "en" ? "GST/HST" : "TPS/TVH";
+  if (cc === "CA") return locale.startsWith("fr") ? "TPS/TVH" : "GST/HST";
   return "Tax ID";
 }
 
@@ -171,7 +172,7 @@ export interface PdfDocumentLabels {
   // Defaults to "due" (invoice). Pass null to show just the amount with no date
   // (e.g. a credit note or purchase order isn't "due" on a date).
   summaryNoun?: string | null;
-  locale?: "en" | "fr" | "fr-CA";
+  locale?: AppLocale;
 }
 
 interface InvoiceDocProps {
@@ -185,7 +186,9 @@ interface InvoiceDocProps {
 function InvoiceDocument({ invoice: inv, org, contact, template, labels }: InvoiceDocProps) {
   const accent = template.accentColor || "#10b981";
   const locale = labels?.locale ?? "en";
-  const messages = invoiceMessages[locale];
+  const messages = locale.startsWith("fr")
+    ? invoiceMessages[locale === "fr-CA" ? "fr-CA" : "fr"]
+    : invoiceMessages.en;
   const taxLabel = getTaxIdLabel(org.countryCode, locale);
   const title = labels?.title ?? (getInvoiceTitle(org.countryCode, !!org.taxId) === "Tax Invoice" ? messages.taxInvoice : messages.invoice);
   const amountDue = inv.amountDue ?? inv.total;
@@ -198,7 +201,7 @@ function InvoiceDocument({ invoice: inv, org, contact, template, labels }: Invoi
   // summaryNoun === null shows just the amount with no "due {date}".
   const showDateRow = labels?.dateLabel !== null;
   const dateRowLabel = labels?.dateLabel ?? messages.due;
-  const summaryNoun = labels?.summaryNoun === undefined ? (locale === "en" ? "due" : "à payer le") : labels.summaryNoun;
+  const summaryNoun = labels?.summaryNoun === undefined ? (locale.startsWith("fr") ? "à payer le" : "due") : labels.summaryNoun;
   const formatDate = (date: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
   const summaryText = summaryNoun
     ? `${fmtMoney(amountDue, inv.currencyCode, locale)} ${summaryNoun} ${formatDate(inv.dueDate)}`

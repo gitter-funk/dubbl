@@ -169,7 +169,7 @@ export function registerPayrollTools(server: McpServer, ctx: AuthContext) {
         .default(2000)
         .describe("Flat fallback tax rate in basis points (2000 = 20%); only used when no bracket schedule exists"),
       email: z.string().email().nullable().optional().describe("Employee email"),
-      preferredLocale: z.enum(locales).nullable().optional().describe("Preferred language for payslips and employee documents: en, fr, or fr-CA; omit to use the organization default"),
+      preferredLocale: z.enum(locales).nullable().optional().describe(`Preferred locale for payslips and employee documents. Supported tags: ${locales.join(", ")}; omit to use the organization default`),
       position: z.string().nullable().optional().describe("Job title / position"),
       startDate: z.string().min(1).describe("Employment start date (YYYY-MM-DD)"),
       endDate: z.string().nullable().optional().describe("Employment end date (YYYY-MM-DD), if any"),
