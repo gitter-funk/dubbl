@@ -1,0 +1,42 @@
+{
+  "Settings": {
+    "General": {
+      "street": "Strasse"
+    },
+    "ApiKeys": {
+      "authenticationHelp": "Fügen Sie Ihren API-Schlüssel im Header unter dem Namen {header} als Bearer-Token hinzu. Schlüssel sind auf die Organisation beschränkt, in der sie erstellt wurden. Halten Sie sie geheim und wechseln Sie sie regelmässig."
+    },
+    "Roles": {
+      "permissions": {
+        "post:entries": "Transaktionen abschliessen (sie sperren sich an)"
+      }
+    }
+  },
+  "Tax": {
+    "Rates": {
+      "kindHelp": {
+        "noTax": "Ausserhalb des Umfangs des Umsatzsteuers/GST."
+      }
+    }
+  },
+  "Payroll": {
+    "Runs": {
+      "steps": {
+        "finish": "Abschliessen & Buchen"
+      },
+      "oneOffHelp": "Ein einmaliger Zahlungsbeitrag ausserhalb deines normalen Bezahltermins"
+    },
+    "RunDetails": {
+      "finishConfirmTitle": "Dieses Verfahren abschliessen und es aufrechnen?",
+      "finishAndRecord": "Abschliessen und aufrechnen",
+      "finishing": "Abschliessen…",
+      "finishAndRecordPayroll": "Abschliessen und Lohnabrechnung notieren",
+      "itemTypes": {
+        "regularSalary": "Regelmässige Lohnzahlung"
+      }
+    },
+    "TaxLiabilities": {
+      "amountMustBePositive": "Geben Sie einen Betrag grösser null ein"
+    }
+  }
+}

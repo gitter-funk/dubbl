@@ -83,19 +83,25 @@ test("every locale provides all English message keys through its fallback chain"
 });
 
 test("regional catalogs contain only messages that differ from their base language", () => {
-  const french = leafValues(loadCatalog("fr"));
-  const canadianFrench = leafValues(loadCatalog("fr-CA"));
-  const duplicatedMessages = [...canadianFrench].filter(
-    ([key, value]) => french.get(key) === value,
-  );
+  const catalogFiles = readdirSync(messagesDir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.slice(0, -".json".length));
+  const catalogNames = new Set(catalogFiles);
+  const failures: string[] = [];
 
-  assert.deepEqual(
-    duplicatedMessages,
-    [],
-    `fr-CA should inherit identical French strings instead of duplicating them:\n${duplicatedMessages
-      .map(([key]) => key)
-      .join("\n")}`,
-  );
+  for (const locale of catalogNames) {
+    const baseLanguage = locale.split("-")[0];
+    if (baseLanguage === locale || !catalogNames.has(baseLanguage)) continue;
+
+    const base = leafValues(loadCatalog(baseLanguage));
+    const regional = leafValues(loadCatalog(locale));
+    const duplicatedMessages = [...regional].filter(([key, value]) => base.get(key) === value);
+    if (duplicatedMessages.length > 0) {
+      failures.push(`${locale} duplicates ${duplicatedMessages.length} messages from ${baseLanguage}:\n  ${duplicatedMessages.map(([key]) => key).join("\n  ")}`);
+    }
+  }
+
+  assert.deepEqual(failures, [], failures.join("\n"));
 });
 
 test("regional catalogs inherit French and English messages at runtime", () => {
@@ -115,6 +121,21 @@ test("regional catalogs inherit French and English messages at runtime", () => {
     leafValues(loadCatalog("fr")).get("Navigation.dashboard"),
     "Canadian French inherits the parent French message when no override exists",
   );
+});
+
+test("German UI messages are translated and Swiss spelling overrides inherit", () => {
+  const german = leafValues(loadCatalog("de"));
+  const swiss = leafValues(loadCatalog("de-CH"));
+  const resolved = leafValues(mergeMessages(loadCatalog("de"), loadCatalog("de-CH")) as CatalogValue);
+
+  assert.equal(german.get("Navigation.payroll"), "Lohnabrechnung");
+  assert.equal(german.get("Navigation.dashboard"), "Übersicht");
+  assert.equal(
+    german.get("Settings.Members.billingPastDueDescription"),
+    "Aktualisieren Sie Ihre Zahlungsmethode, um weiterhin Mitglieder einzuladen.",
+  );
+  assert.equal(swiss.get("Settings.General.street"), "Strasse");
+  assert.equal(resolved.get("Settings.ApiKeys.createdOn"), german.get("Settings.ApiKeys.createdOn"));
 });
 
 test("nested locale fallback preserves English and French values under regional overrides", () => {
