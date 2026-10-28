@@ -1591,6 +1591,65 @@
       "dangerZoneDescription": "Actions irréversibles pour cet employé.",
       "deleteEmployee": "Supprimer l’employé",
       "deleteEmployeeDescription": "Supprimer définitivement cet employé et toutes les données associées."
+    },
+    "Runs": {
+      "pageTitle": "Paie · Cycles de paie",
+      "createFailed": "Échec de la création du cycle de paie",
+      "created": "Cycle de paie créé",
+      "offCycleCreateFailed": "Échec de la création du cycle {type}",
+      "offCycleCreated": "Cycle {type} créé",
+      "steps": {
+        "setUp": "Configuration",
+        "review": "Vérification",
+        "finish": "Finaliser et comptabiliser"
+      },
+      "emptyTitle": "Lancez votre première paie",
+      "emptyDescription": "Configurez une période de paie, vérifiez la rémunération de chaque employé, puis finalisez-la pour confirmer les montants et comptabiliser les salaires.",
+      "newRun": "Nouveau cycle de paie",
+      "all": "Tous",
+      "statuses": {
+        "draft": "À terminer",
+        "processing": "Finalisation",
+        "completed": "Terminé et comptabilisé",
+        "pendingApproval": "En attente d’approbation",
+        "void": "Annulé"
+      },
+      "oneOffHelp": "Paiement ponctuel en dehors de votre jour de paie habituel",
+      "oneOffPayment": "Paiement ponctuel",
+      "finalPayHelp": "Dernier paiement pour une personne qui quitte l’entreprise",
+      "finalPay": "Dernier paiement (départ)",
+      "bonusOnlyHelp": "Paiement ponctuel d’une prime",
+      "bonusOnly": "Prime uniquement",
+      "correctionHelp": "Corriger une erreur dans une paie passée",
+      "fixPastPayroll": "Corriger une paie passée",
+      "allTypes": "Tous les types",
+      "runTypes": {
+        "regular": "Régulier",
+        "termination": "Départ",
+        "bonus": "Prime",
+        "correction": "Correction",
+        "offCycle": "Hors cycle"
+      },
+      "searchPlaceholder": "Rechercher par date ou statut…",
+      "loading": "Chargement",
+      "noRunsFound": "Aucun cycle trouvé",
+      "tryDifferentSearch": "Essayez un autre terme de recherche",
+      "noRunsMatchFilter": "Aucun cycle ne correspond à ce filtre",
+      "to": "à",
+      "beforeDeductions": "Avant retenues",
+      "taxesAndDeductions": "Impôts et retenues",
+      "takeHome": "Net à payer",
+      "newRunTitle": "Nouveau cycle de paie",
+      "payPeriodStart": "Début de la période de paie",
+      "payPeriodEnd": "Fin de la période de paie",
+      "cancel": "Annuler",
+      "creating": "Création…",
+      "createRun": "Créer le cycle",
+      "sort": {
+        "date": "Date",
+        "gross": "Avant retenues",
+        "net": "Net à payer"
+      }
     }
   }
 }
