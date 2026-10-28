@@ -16,6 +16,8 @@ const localizedSources = [
   "app/(dashboard)/settings/notifications/page.tsx",
   "app/(dashboard)/settings/roles/page.tsx",
   "app/(dashboard)/settings/tags/page.tsx",
+  "app/(dashboard)/sales/quotes/page.tsx",
+  "app/(dashboard)/sales/page.tsx",
 ];
 
 function visibleLiteralStrings(sourcePath: string): string[] {
@@ -68,7 +70,7 @@ function missingMessageKeys(sourcePath: string): string[] {
   let translator = "t";
   const usedKeys = new Set<string>();
 
-  function visit(node: ts.Node) {
+  function findTranslator(node: ts.Node) {
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && ts.isCallExpression(node.initializer)) {
       const call = node.initializer;
       if (ts.isIdentifier(call.expression) && call.expression.text === "useTranslations" && call.arguments[0] && ts.isStringLiteral(call.arguments[0])) {
@@ -76,7 +78,10 @@ function missingMessageKeys(sourcePath: string): string[] {
         namespace = call.arguments[0].text;
       }
     }
+    ts.forEachChild(node, findTranslator);
+  }
 
+  function visit(node: ts.Node) {
     if (ts.isCallExpression(node)) {
       const expression = node.expression;
       const isTranslatorCall = ts.isIdentifier(expression)
@@ -90,6 +95,7 @@ function missingMessageKeys(sourcePath: string): string[] {
     ts.forEachChild(node, visit);
   }
 
+  findTranslator(sourceFile);
   visit(sourceFile);
   return [...usedKeys].filter((key) => {
     let value: unknown = english;
