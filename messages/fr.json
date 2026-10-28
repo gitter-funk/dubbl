@@ -1650,6 +1650,34 @@
         "gross": "Avant retenues",
         "net": "Net à payer"
       }
+    },
+    "Payslips": {
+      "pageTitle": "Paie · Bulletins de paie",
+      "backToRun": "Retour au cycle",
+      "title": "Bulletins de paie",
+      "to": "au",
+      "emptyTitle": "Aucun bulletin de paie pour le moment",
+      "emptyDescription": "Utilisez le bouton « Générer les bulletins de paie » sur la page du cycle pour créer un bulletin pour chaque employé.",
+      "goToRun": "Aller au cycle",
+      "beforeDeductions": "Avant retenues",
+      "taxesAndDeductions": "Impôts et retenues",
+      "takeHome": "Net à payer",
+      "hide": "Masquer",
+      "viewPayslip": "Voir le bulletin",
+      "noPayslip": "Aucun bulletin",
+      "taxWithheld": "Impôt retenu",
+      "otherDeductions": "Autres retenues",
+      "deductions": "Retenues",
+      "deduction": "Retenue",
+      "yearToDate": "Cumul annuel",
+      "earned": "Gains",
+      "tax": "Impôt",
+      "statuses": {
+        "generated": "Prêt",
+        "sent": "Envoyé",
+        "viewed": "Consulté"
+      },
+      "missingPayslips": "{count, plural, one {# employé n’a pas encore de bulletin. Utilisez « Générer les bulletins de paie » sur la page du cycle pour le créer.} other {# employés n’ont pas encore de bulletin. Utilisez « Générer les bulletins de paie » sur la page du cycle pour les créer.}}"
     }
   }
 }

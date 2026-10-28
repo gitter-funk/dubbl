@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft, FileText, ChevronDown, ScrollText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,13 +45,6 @@ interface Payslip {
   ytdTax: number;
 }
 
-// Plain-language payslip status labels for non-accountants.
-const statusLabels: Record<string, string> = {
-  generated: "Ready",
-  sent: "Sent",
-  viewed: "Opened",
-};
-
 interface Row {
   employeeId: string;
   name: string;
@@ -59,6 +53,8 @@ interface Row {
 }
 
 export default function RunPayslipsPage() {
+  const t = useTranslations("Payroll.Payslips");
+  const locale = useLocale();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [run, setRun] = useState<RunDetail | null>(null);
@@ -66,7 +62,7 @@ export default function RunPayslipsPage() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useDocumentTitle("Payroll · Payslips");
+  useDocumentTitle(t("pageTitle"));
 
   const load = useCallback(async () => {
     const orgId = localStorage.getItem("activeOrgId");
@@ -157,7 +153,7 @@ export default function RunPayslipsPage() {
         onClick={() => router.push(`/payroll/runs/${id}`)}
         className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="size-3.5" /> Back to run
+        <ArrowLeft className="size-3.5" /> {t("backToRun")}
       </button>
 
       <div className="flex items-center gap-3">
@@ -165,10 +161,10 @@ export default function RunPayslipsPage() {
           <ScrollText className="size-5 text-muted-foreground" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold">Payslips</h1>
+          <h1 className="text-lg font-semibold">{t("title")}</h1>
           {run && (
             <p className="text-sm text-muted-foreground">
-              {run.payPeriodStart} to {run.payPeriodEnd}
+              {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${run.payPeriodStart}T12:00:00Z`))} {t("to")} {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${run.payPeriodEnd}T12:00:00Z`))}
             </p>
           )}
         </div>
@@ -179,10 +175,9 @@ export default function RunPayslipsPage() {
           <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted mb-3">
             <FileText className="size-5 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium">No payslips yet</p>
+          <p className="text-sm font-medium">{t("emptyTitle")}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Use the &quot;Generate Payslips&quot; button on the run page to create a
-            payslip for every employee.
+            {t("emptyDescription")}
           </p>
           <Button
             variant="outline"
@@ -190,7 +185,7 @@ export default function RunPayslipsPage() {
             className="mt-4"
             onClick={() => router.push(`/payroll/runs/${id}`)}
           >
-            Go to run
+            {t("goToRun")}
           </Button>
         </div>
       ) : (
@@ -219,37 +214,37 @@ export default function RunPayslipsPage() {
                       <>
                         <div className="hidden sm:block text-right">
                           <p className="text-xs text-muted-foreground">
-                            Before deductions
+                            {t("beforeDeductions")}
                           </p>
                           <p className="text-sm font-mono tabular-nums">
-                            {formatMoney(ps.grossAmount)}
+                            {formatMoney(ps.grossAmount, "USD", locale)}
                           </p>
                         </div>
                         <div className="hidden sm:block text-right">
                           <p className="text-xs text-muted-foreground">
-                            Taxes &amp; deductions
+                            {t("taxesAndDeductions")}
                           </p>
                           <p className="text-sm font-mono tabular-nums text-red-600 dark:text-red-400">
-                            {formatMoney(totalDeductions)}
+                            {formatMoney(totalDeductions, "USD", locale)}
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">
-                            Take-home
+                            {t("takeHome")}
                           </p>
                           <p className="text-sm font-mono tabular-nums font-medium">
-                            {formatMoney(ps.netAmount)}
+                            {formatMoney(ps.netAmount, "USD", locale)}
                           </p>
                         </div>
                         <Badge variant="outline" className="text-[10px]">
-                          {statusLabels[ps.status] || ps.status}
+                          {t(`statuses.${ps.status}` as "statuses.generated" | "statuses.sent" | "statuses.viewed")}
                         </Badge>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => toggle(row)}
                         >
-                          {isOpen ? "Hide" : "View payslip"}
+                          {isOpen ? t("hide") : t("viewPayslip")}
                           <ChevronDown
                             className={cn(
                               "ml-1.5 size-3.5 transition-transform",
@@ -260,7 +255,7 @@ export default function RunPayslipsPage() {
                       </>
                     ) : (
                       <Badge variant="outline" className="text-[10px]">
-                        No payslip
+                        {t("noPayslip")}
                       </Badge>
                     )}
                   </div>
@@ -269,16 +264,16 @@ export default function RunPayslipsPage() {
                 {isOpen && ps && (
                   <div className="border-t bg-muted/30 px-4 py-4">
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
-                      <Detail label="Before deductions" value={formatMoney(ps.grossAmount)} />
-                      <Detail label="Tax withheld" value={formatMoney(ps.taxAmount)} />
-                      <Detail label="Other deductions" value={formatMoney(otherDeductions)} />
-                      <Detail label="Take-home" value={formatMoney(ps.netAmount)} emphasize />
+                      <Detail label={t("beforeDeductions")} value={formatMoney(ps.grossAmount, "USD", locale)} />
+                      <Detail label={t("taxWithheld")} value={formatMoney(ps.taxAmount, "USD", locale)} />
+                      <Detail label={t("otherDeductions")} value={formatMoney(otherDeductions, "USD", locale)} />
+                      <Detail label={t("takeHome")} value={formatMoney(ps.netAmount, "USD", locale)} emphasize />
                     </div>
 
                     {ps.deductionsBreakdown && ps.deductionsBreakdown.length > 0 && (
                       <div className="mt-4">
                         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1.5">
-                          Deductions
+                          {t("deductions")}
                         </p>
                         <div className="rounded-lg border bg-card divide-y">
                           {ps.deductionsBreakdown.map((d, i) => (
@@ -287,10 +282,10 @@ export default function RunPayslipsPage() {
                               className="flex items-center justify-between px-3 py-2"
                             >
                               <span className="text-xs capitalize">
-                                {d.name || d.category || "Deduction"}
+                                {d.name || d.category || t("deduction")}
                               </span>
                               <span className="text-xs font-mono tabular-nums">
-                                {formatMoney(d.amount || 0)}
+                                {formatMoney(d.amount || 0, "USD", locale)}
                               </span>
                             </div>
                           ))}
@@ -300,12 +295,12 @@ export default function RunPayslipsPage() {
 
                     <div className="mt-4">
                       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1.5">
-                        This year so far
+                        {t("yearToDate")}
                       </p>
                       <div className="grid grid-cols-3 gap-x-8 gap-y-2">
-                        <Detail label="Earned" value={formatMoney(ps.ytdGross)} small />
-                        <Detail label="Tax" value={formatMoney(ps.ytdTax)} small />
-                        <Detail label="Take-home" value={formatMoney(ps.ytdNet)} small />
+                        <Detail label={t("earned")} value={formatMoney(ps.ytdGross, "USD", locale)} small />
+                        <Detail label={t("tax")} value={formatMoney(ps.ytdTax, "USD", locale)} small />
+                        <Detail label={t("takeHome")} value={formatMoney(ps.ytdNet, "USD", locale)} small />
                       </div>
                     </div>
                   </div>
@@ -318,9 +313,7 @@ export default function RunPayslipsPage() {
 
       {generated > 0 && generated < rows.length && (
         <p className="text-xs text-muted-foreground">
-          {rows.length - generated} employee
-          {rows.length - generated === 1 ? " has" : "s have"} no payslip yet. Use
-          &quot;Generate Payslips&quot; on the run page to create the missing ones.
+          {t("missingPayslips", { count: rows.length - generated })}
         </p>
       )}
     </ContentReveal>

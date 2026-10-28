@@ -1650,6 +1650,34 @@
         "gross": "Before deductions",
         "net": "Take-home"
       }
+    },
+    "Payslips": {
+      "pageTitle": "Payroll · Payslips",
+      "backToRun": "Back to run",
+      "title": "Payslips",
+      "to": "to",
+      "emptyTitle": "No payslips yet",
+      "emptyDescription": "Use the “Generate Payslips” button on the run page to create a payslip for every employee.",
+      "goToRun": "Go to run",
+      "beforeDeductions": "Before deductions",
+      "taxesAndDeductions": "Taxes & deductions",
+      "takeHome": "Take-home",
+      "hide": "Hide",
+      "viewPayslip": "View payslip",
+      "noPayslip": "No payslip",
+      "taxWithheld": "Tax withheld",
+      "otherDeductions": "Other deductions",
+      "deductions": "Deductions",
+      "deduction": "Deduction",
+      "yearToDate": "This year so far",
+      "earned": "Earned",
+      "tax": "Tax",
+      "statuses": {
+        "generated": "Ready",
+        "sent": "Sent",
+        "viewed": "Opened"
+      },
+      "missingPayslips": "{count, plural, one {# employee has no payslip yet. Use “Generate Payslips” on the run page to create it.} other {# employees have no payslips yet. Use “Generate Payslips” on the run page to create them.}}"
     }
   }
 }
