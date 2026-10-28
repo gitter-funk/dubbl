@@ -1,6 +1,7 @@
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { creditNote, documentTemplate, organization } from "@/lib/db/schema";
+import { creditNote, organization } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getAuthContext } from "@/lib/api/auth-context";
 import { notDeleted } from "@/lib/db/soft-delete";
@@ -34,14 +35,7 @@ export async function GET(
 
     // Credit notes reuse the invoice template if a default one exists; there is
     // no dedicated credit_note template type in the enum, so fall back to invoice.
-    const template = await db.query.documentTemplate.findFirst({
-      where: and(
-        eq(documentTemplate.organizationId, ctx.organizationId),
-        eq(documentTemplate.type, "invoice"),
-        eq(documentTemplate.isDefault, true),
-        notDeleted(documentTemplate.deletedAt)
-      ),
-    });
+    const template = await getDocumentTemplateForRecipient({ organizationId: ctx.organizationId, type: "invoice", preferredLocale: found.contact?.preferredLocale });
 
     const org = await db.query.organization.findFirst({
       where: eq(organization.id, ctx.organizationId),
@@ -57,6 +51,8 @@ export async function GET(
       phone: org?.contactPhone || null,
       email: org?.contactEmail || null,
       countryCode: org?.countryCode || null,
+      documentLocale: org?.documentLocale,
+      enabledLocales: org?.enabledLocales,
     };
 
     const contactAddress = formatContactAddress(
@@ -109,6 +105,7 @@ export async function GET(
           email: docData.contactEmail,
           address: contactAddress,
           taxNumber: docData.contactTaxNumber,
+          preferredLocale: found.contact?.preferredLocale,
         },
         templateSettings,
         {

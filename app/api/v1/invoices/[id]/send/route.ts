@@ -9,6 +9,7 @@ import { notDeleted } from "@/lib/db/soft-delete";
 import { logAudit } from "@/lib/api/audit";
 import { createInvoiceJournalEntry, createCogsJournalEntry, assertBaseRateAvailable } from "@/lib/api/journal-automation";
 import { buildSenderSnapshot, buildRecipientSnapshot } from "@/lib/documents/snapshots";
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 import { sendDocumentEmail } from "@/lib/email/document-sender";
 import { renderDocumentEmailHtml } from "@/lib/email/render-document-email";
 import { randomBytes } from "crypto";
@@ -102,6 +103,7 @@ export async function POST(
           const org = await db.query.organization.findFirst({
             where: eq(organization.id, ctx.organizationId),
           });
+          const template = await getDocumentTemplateForRecipient({ organizationId: ctx.organizationId, type: "invoice", preferredLocale: found.contact?.preferredLocale });
           const buf = await renderInvoicePdf(
             {
               invoiceNumber: found.invoiceNumber,
@@ -120,9 +122,9 @@ export async function POST(
               total: found.total,
               notes: found.notes,
             },
-            { name: org?.name || "" },
-            found.contact ? { name: found.contact.name } : { name: "Unknown" },
-            {}
+            { name: org?.name || "", documentLocale: org?.documentLocale, enabledLocales: org?.enabledLocales },
+            found.contact ? { name: found.contact.name, preferredLocale: found.contact.preferredLocale } : { name: "Unknown" },
+            template || {}
           );
           pdfBuffer = Buffer.from(buf);
           pdfFilename = `invoice-${found.invoiceNumber}.pdf`;

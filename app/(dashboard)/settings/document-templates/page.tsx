@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   FileText,
@@ -47,12 +47,14 @@ import {
 import { BrandLoader } from "@/components/dashboard/brand-loader";
 import { ContentReveal } from "@/components/ui/content-reveal";
 import { useConfirm } from "@/lib/hooks/use-confirm";
-import { cn } from "@/lib/utils";
+import { useDocumentLocales } from "@/lib/hooks/use-document-locales";
+import { localeLabels, type AppLocale } from "@/lib/i18n/locales";
 
 interface Template {
   id: string;
   name: string;
   type: string;
+  locale: AppLocale;
   logoUrl: string | null;
   accentColor: string | null;
   headerHtml: string | null;
@@ -89,6 +91,7 @@ export default function DocumentTemplatesPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -105,25 +108,39 @@ export default function DocumentTemplatesPage() {
   const [bankDetails, setBankDetails] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isDefault, setIsDefault] = useState(false);
+  const [templateLocale, setTemplateLocale] = useState<AppLocale>("en");
+  const [organizationDefaultLocale, setOrganizationDefaultLocale] = useState<AppLocale>("en");
+  const documentLocales = useDocumentLocales();
 
-  function getHeaders() {
+  const getHeaders = useCallback(() => {
     const orgId = localStorage.getItem("activeOrgId") || "";
     return { "x-organization-id": orgId, "Content-Type": "application/json" };
-  }
+  }, []);
 
-  function fetchTemplates() {
+  const fetchTemplates = useCallback(() => {
     fetch("/api/v1/document-templates", { headers: getHeaders() })
       .then((r) => r.json())
       .then((data) => { if (data.templates) setTemplates(data.templates); })
       .finally(() => setLoading(false));
-  }
+  }, [getHeaders]);
 
-  useEffect(() => { fetchTemplates(); }, []);
+  useEffect(() => {
+    fetchTemplates();
+    fetch("/api/v1/organization", { headers: getHeaders() })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.organization?.documentLocale) {
+          setOrganizationDefaultLocale(data.organization.documentLocale as AppLocale);
+        }
+      })
+      .catch(() => {});
+  }, [fetchTemplates, getHeaders]);
 
   function openCreate() {
     setEditing(null);
     setName("");
     setType("invoice");
+    setTemplateLocale(organizationDefaultLocale);
     setLogoUrl("");
     setAccentColor("#10b981");
     setHeaderHtml("");
@@ -141,6 +158,7 @@ export default function DocumentTemplatesPage() {
     setEditing(t);
     setName(t.name);
     setType(t.type);
+    setTemplateLocale(t.locale);
     setLogoUrl(t.logoUrl || "");
     setAccentColor(t.accentColor || "#10b981");
     setHeaderHtml(t.headerHtml || "");
@@ -159,6 +177,7 @@ export default function DocumentTemplatesPage() {
     const payload = {
       name,
       type,
+      locale: templateLocale,
       logoUrl: logoUrl || null,
       accentColor,
       headerHtml: headerHtml || null,
@@ -171,25 +190,21 @@ export default function DocumentTemplatesPage() {
       isDefault,
     };
 
-    if (editing) {
-      await fetch(`/api/v1/document-templates/${editing.id}`, {
-        method: "PATCH",
+    try {
+      const response = await fetch(editing ? `/api/v1/document-templates/${editing.id}` : "/api/v1/document-templates", {
+        method: editing ? "PATCH" : "POST",
         headers: getHeaders(),
         body: JSON.stringify(payload),
       });
-      toast.success("Template updated");
-    } else {
-      await fetch("/api/v1/document-templates", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(payload),
-      });
-      toast.success("Template created");
+      if (!response.ok) throw new Error((await response.json()).error || "Failed to save template");
+      toast.success(editing ? "Template updated" : "Template created");
+      setSheetOpen(false);
+      fetchTemplates();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save template");
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
-    setSheetOpen(false);
-    fetchTemplates();
   }
 
   async function handleDelete(t: Template) {
@@ -211,6 +226,21 @@ export default function DocumentTemplatesPage() {
 
   async function handlePreview(t: Template) {
     setPreviewTemplateId(t.id);
+    setPreviewHtml(null);
+    if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl);
+    setPreviewPdfUrl(null);
+    if (t.type === "payslip") {
+      const response = await fetch(`/api/v1/document-templates/${t.id}/preview?format=pdf`, {
+        method: "POST",
+        headers: getHeaders(),
+      });
+      if (!response.ok) {
+        toast.error("Failed to load payslip template preview");
+        return;
+      }
+      setPreviewPdfUrl(URL.createObjectURL(await response.blob()));
+      return;
+    }
     const res = await fetch(`/api/v1/document-templates/${t.id}/preview`, {
       method: "POST",
       headers: getHeaders(),
@@ -229,7 +259,8 @@ export default function DocumentTemplatesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "sample-invoice.pdf";
+    const previewTemplate = templates.find((template) => template.id === previewTemplateId);
+    a.download = `sample-${previewTemplate?.type || "document"}-${previewTemplate?.locale || "en"}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -281,6 +312,7 @@ export default function DocumentTemplatesPage() {
                           <Star className="size-2.5 mr-0.5" /> Default
                         </Badge>
                       )}
+                      <Badge variant="secondary" className="text-[10px]">{localeLabels[t.locale]}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {TYPE_LABELS[t.type] || t.type}
@@ -346,6 +378,18 @@ export default function DocumentTemplatesPage() {
                   </Select>
                 </div>
               )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Template language</Label>
+                <Select value={templateLocale} onValueChange={(value) => setTemplateLocale(value as AppLocale)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {documentLocales.map((value) => (
+                      <SelectItem key={value} value={value}>{localeLabels[value]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">A default template is selected independently for each language.</p>
+              </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-xs">Default Template</Label>
@@ -450,7 +494,7 @@ export default function DocumentTemplatesPage() {
         </Sheet>
 
         {/* Preview Dialog */}
-        <Dialog open={!!previewHtml} onOpenChange={() => { setPreviewHtml(null); setPreviewTemplateId(null); }}>
+        <Dialog open={!!previewHtml || !!previewPdfUrl} onOpenChange={() => { setPreviewHtml(null); setPreviewTemplateId(null); if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl); setPreviewPdfUrl(null); }}>
           <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
             <DialogHeader>
               <div className="flex items-center justify-between">
@@ -461,12 +505,8 @@ export default function DocumentTemplatesPage() {
                 </Button>
               </div>
             </DialogHeader>
-            {previewHtml && (
-              <iframe
-                srcDoc={previewHtml}
-                className="w-full h-[600px] border rounded"
-                title="Template Preview"
-              />
+            {(previewHtml || previewPdfUrl) && (
+              <iframe src={previewPdfUrl || undefined} srcDoc={previewPdfUrl ? undefined : previewHtml || undefined} className="w-full h-[600px] border rounded" title={previewPdfUrl ? "Payslip template preview" : "Template Preview"} />
             )}
           </DialogContent>
         </Dialog>

@@ -26,11 +26,15 @@ import { useConfirm } from "@/lib/hooks/use-confirm";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { CurrencySelect } from "@/components/ui/currency-select";
 import { cn } from "@/lib/utils";
+import { DocumentLocaleSelect } from "@/components/shared/document-locale-select";
+import { useDocumentLocales } from "@/lib/hooks/use-document-locales";
+import type { AppLocale } from "@/lib/i18n/locales";
 
 interface EmployeeDetail {
   id: string;
   name: string;
   email: string | null;
+  preferredLocale: string | null;
   employeeNumber: string;
   position: string | null;
   salary: number;
@@ -99,6 +103,7 @@ function getPerPeriodPay(salary: number, frequency: string): number {
 
 export default function EmployeeDetailPage() {
   const t = useTranslations("Payroll.EmployeeDetails");
+  const tCommon = useTranslations("Common");
   const locale = useLocale();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -136,6 +141,8 @@ export default function EmployeeDetailPage() {
   const [compensationType, setCompensationType] = useState("salary");
   const [hourlyRate, setHourlyRate] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [preferredLocale, setPreferredLocale] = useState<AppLocale | "">("");
+  const documentLocales = useDocumentLocales();
   useDocumentTitle(t("pageTitle"));
 
   const orgId =
@@ -155,6 +162,7 @@ export default function EmployeeDetailPage() {
           setEmp(e);
           setName(e.name);
           setEmail(e.email || "");
+          setPreferredLocale((e.preferredLocale as AppLocale | null) ?? "");
           setEmployeeNumber(e.employeeNumber);
           setPosition(e.position || "");
           setSalary((e.salary / 100).toFixed(2));
@@ -266,6 +274,7 @@ export default function EmployeeDetailPage() {
         body: JSON.stringify({
           name,
           email: email || null,
+          preferredLocale: preferredLocale || null,
           position: position || null,
           salary: Math.round(parseFloat(salary) * 100),
           payFrequency,
@@ -453,6 +462,16 @@ export default function EmployeeDetailPage() {
                 onChange={(e) => setPosition(e.target.value)}
               />
             </div>
+          </div>
+          <div className="mt-4 max-w-sm space-y-1.5">
+            <Label className="text-xs">{tCommon("preferredDocumentLanguage")}</Label>
+            <DocumentLocaleSelect
+              id="employee-document-locale"
+              value={preferredLocale}
+              locales={documentLocales}
+              onChange={setPreferredLocale}
+            />
+            <p className="text-xs text-muted-foreground">{tCommon("documentLanguageHelp")}</p>
           </div>
         </Section>
 

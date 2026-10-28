@@ -121,6 +121,7 @@ export const organization = pgTable("organization", {
   businessType: text("business_type"),
   defaultCurrency: text("default_currency").notNull().default("USD"),
   documentLocale: text("document_locale").notNull().default("en"),
+  enabledLocales: text("enabled_locales").array().notNull().default(["en", "fr", "fr-CA"]),
   fiscalYearStartMonth: integer("fiscal_year_start_month")
     .notNull()
     .default(1),

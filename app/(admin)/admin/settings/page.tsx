@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Shield, Building2, CreditCard } from "lucide-react";
+import { Settings, Shield, Building2, CreditCard, Languages } from "lucide-react";
 import { toast } from "sonner";
 
 interface SiteSettings {
@@ -22,6 +22,7 @@ interface SiteSettings {
   allowed_email_domains: string;
   allow_user_org_creation: string;
   self_hosted_unlimited: string;
+  enabled_locales: string;
 }
 
 export default function AdminSettingsPage() {
@@ -167,6 +168,28 @@ export default function AdminSettingsPage() {
                 })
               }
             />
+          </div>
+        </div>
+
+        {/* Instance locales */}
+        <div className="rounded-xl border bg-card p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Languages className="size-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold">Languages</h3>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Locales available on this instance</Label>
+            <Textarea
+              value={settings.enabled_locales}
+              onChange={(event) => setSettings({ ...settings, enabled_locales: event.target.value })}
+              onBlur={() => save({ enabled_locales: settings.enabled_locales })}
+              placeholder="en, fr, fr-CA"
+              rows={2}
+              className="text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Comma-separated BCP 47 locale tags supported by this deployment. English is required as the fallback; organizations can enable a subset.
+            </p>
           </div>
         </div>
 

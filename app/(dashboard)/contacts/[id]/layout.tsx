@@ -55,6 +55,7 @@ export interface ContactDetail {
   name: string;
   email: string | null;
   phone: string | null;
+  preferredLocale: string | null;
   taxNumber: string | null;
   type: "customer" | "supplier" | "both";
   paymentTermsDays: number;

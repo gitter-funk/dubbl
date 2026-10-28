@@ -11,11 +11,14 @@ import { checkResourceLimit, checkMultiCurrency } from "@/lib/api/check-limit";
 import { logAudit } from "@/lib/api/audit";
 import { z } from "zod";
 import { currencyCodeSchema } from "@/lib/currency/zod";
+import { locales } from "@/lib/i18n/locales";
+import { isLocaleEnabledForOrganization } from "@/lib/i18n/locale-policy";
 
 const createSchema = z.object({
   name: z.string().min(1),
   email: z.string().email().nullable().optional(),
   phone: z.string().nullable().optional(),
+  preferredLocale: z.enum(locales).nullable().optional(),
   taxNumber: z.string().nullable().optional(),
   type: z.enum(["customer", "supplier", "both"]).default("customer"),
   paymentTermsDays: z.number().int().min(0).default(30),
@@ -155,6 +158,10 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const parsed = createSchema.parse(body);
+
+    if (!(await isLocaleEnabledForOrganization(ctx.organizationId, parsed.preferredLocale))) {
+      return NextResponse.json({ error: "This document language is not enabled for the organization" }, { status: 400 });
+    }
 
     await checkResourceLimit(ctx.organizationId, contact, contact.organizationId, "contacts", contact.deletedAt);
     await checkMultiCurrency(ctx.organizationId, parsed.currencyCode);

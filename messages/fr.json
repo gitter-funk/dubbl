@@ -188,7 +188,10 @@
     "notifications": "Notifications",
     "notReclaimable": "non récupérable",
     "reclaimable": "récupérable",
-    "percentReclaimable": "{percent} % récupérable"
+    "percentReclaimable": "{percent} % récupérable",
+    "preferredDocumentLanguage": "Langue préférée des documents",
+    "organizationDefaultDocumentLanguage": "Utiliser la langue par défaut de l’organisation",
+    "documentLanguageHelp": "Les factures, les bons de commande et les bulletins de paie utilisent cette langue lorsqu’elle est disponible."
   },
   "Dashboard": {
     "gettingStarted": "Pour commencer",
@@ -294,7 +297,12 @@
       "schemeGln": "GLN",
       "schemeItalianVat": "TVA italienne",
       "schemeGermanVat": "TVA allemande",
-      "schemeUkVat": "TVA britannique"
+      "schemeUkVat": "TVA britannique",
+      "documentLanguages": "Langues des documents",
+      "documentLanguagesDescription": "Choisissez les langues utilisées par cette organisation pour les documents destinés à la clientèle et au personnel.",
+      "enabledDocumentLanguages": "Langues activées pour les documents",
+      "defaultDocumentLanguage": "Langue par défaut des documents",
+      "documentLanguagesHelp": "La clientèle, les fournisseurs et les employés peuvent avoir leur propre langue. Les documents utilisent cette préférence si la langue est activée; sinon, ils utilisent la langue par défaut."
     },
     "Notifications": {
       "title": "Préférences de notification",
@@ -1677,7 +1685,8 @@
         "sent": "Envoyé",
         "viewed": "Consulté"
       },
-      "missingPayslips": "{count, plural, one {# employé n’a pas encore de bulletin. Utilisez « Générer les bulletins de paie » sur la page du cycle pour le créer.} other {# employés n’ont pas encore de bulletin. Utilisez « Générer les bulletins de paie » sur la page du cycle pour les créer.}}"
+      "missingPayslips": "{count, plural, one {# employé n’a pas encore de bulletin. Utilisez « Générer les bulletins de paie » sur la page du cycle pour le créer.} other {# employés n’ont pas encore de bulletin. Utilisez « Générer les bulletins de paie » sur la page du cycle pour les créer.}}",
+      "downloadPayslip": "Télécharger le bulletin de paie"
     },
     "RunDetails": {
       "pageTitle": "Paie · Détails du cycle",

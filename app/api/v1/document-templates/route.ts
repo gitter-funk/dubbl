@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
 import { documentTemplate } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getAuthContext } from "@/lib/api/auth-context";
@@ -6,6 +7,8 @@ import { requireRole } from "@/lib/api/require-role";
 import { notDeleted } from "@/lib/db/soft-delete";
 import { ok, created, handleError } from "@/lib/api/response";
 import { logAudit } from "@/lib/api/audit";
+import { locales } from "@/lib/i18n/locales";
+import { isLocaleEnabledForOrganization } from "@/lib/i18n/locale-policy";
 import { z } from "zod";
 
 export async function GET(request: Request) {
@@ -29,6 +32,7 @@ export async function GET(request: Request) {
 const createSchema = z.object({
   name: z.string().min(1),
   type: z.enum(["invoice", "quote", "receipt", "payslip", "purchase_order"]),
+  locale: z.enum(locales).default("en"),
   headerHtml: z.string().nullable().optional(),
   footerHtml: z.string().nullable().optional(),
   logoUrl: z.string().nullable().optional(),
@@ -48,6 +52,9 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const parsed = createSchema.parse(body);
+    if (!(await isLocaleEnabledForOrganization(ctx.organizationId, parsed.locale))) {
+      return NextResponse.json({ error: "This template locale is not enabled for the organization" }, { status: 400 });
+    }
 
     // If this is set as default, unset other defaults of same type
     if (parsed.isDefault) {
@@ -55,6 +62,7 @@ export async function POST(request: Request) {
         where: and(
           eq(documentTemplate.organizationId, ctx.organizationId),
           eq(documentTemplate.type, parsed.type),
+          eq(documentTemplate.locale, parsed.locale),
           eq(documentTemplate.isDefault, true),
           notDeleted(documentTemplate.deletedAt)
         ),

@@ -1,8 +1,8 @@
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { invoice, documentTemplate } from "@/lib/db/schema";
+import { invoice } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
-import { notDeleted } from "@/lib/db/soft-delete";
 import { renderInvoicePdf } from "@/lib/documents/pdf-renderer";
 import type { SenderSnapshot, RecipientSnapshot } from "@/lib/documents/snapshots";
 import { formatContactAddress } from "@/lib/documents/snapshots";
@@ -30,14 +30,7 @@ export async function GET(
       return NextResponse.json({ error: "Invalid payment link" }, { status: 404 });
     }
 
-    const template = await db.query.documentTemplate.findFirst({
-      where: and(
-        eq(documentTemplate.organizationId, inv.organizationId),
-        eq(documentTemplate.type, "invoice"),
-        eq(documentTemplate.isDefault, true),
-        notDeleted(documentTemplate.deletedAt)
-      ),
-    });
+    const template = await getDocumentTemplateForRecipient({ organizationId: inv.organizationId, type: "invoice", preferredLocale: inv.contact?.preferredLocale });
 
     // Use snapshot if available, otherwise build from live data
     const sender = inv.senderSnapshot as SenderSnapshot | null;
@@ -59,6 +52,8 @@ export async function GET(
         phone: org?.contactPhone || null,
         email: org?.contactEmail || null,
         countryCode: org?.countryCode || null,
+        documentLocale: org?.documentLocale,
+        enabledLocales: org?.enabledLocales,
       };
     }
 
@@ -91,6 +86,7 @@ export async function GET(
         email: recipient?.email ?? inv.contact?.email ?? null,
         address: contactAddress,
         taxNumber: recipient?.taxNumber ?? inv.contact?.taxNumber ?? null,
+        preferredLocale: inv.contact?.preferredLocale,
       },
       template || {}
     );

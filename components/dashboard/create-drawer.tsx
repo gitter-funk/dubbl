@@ -51,6 +51,9 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ContactPicker } from "@/components/dashboard/contact-picker";
+import { DocumentLocaleSelect } from "@/components/shared/document-locale-select";
+import { useDocumentLocales } from "@/lib/hooks/use-document-locales";
+import type { AppLocale } from "@/lib/i18n/locales";
 import { LineItemsEditor, type LineItem } from "@/components/dashboard/line-items-editor";
 import { EntryForm } from "@/components/dashboard/entry-form";
 import { AccountPicker } from "@/components/dashboard/account-picker";
@@ -180,6 +183,12 @@ function DrawerFooter({
 function ContactDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [preferredLocale, setPreferredLocale] = useState<AppLocale | "">("");
+  const documentLocales = useDocumentLocales();
+
+  useEffect(() => {
+    if (!open) setPreferredLocale("");
+  }, [open]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -196,6 +205,7 @@ function ContactDrawer({ open, onClose }: { open: boolean; onClose: () => void }
           name: form.get("name"),
           email: form.get("email") || null,
           phone: form.get("phone") || null,
+          preferredLocale: preferredLocale || null,
           taxNumber: form.get("taxNumber") || null,
           type: form.get("type") || "customer",
           paymentTermsDays: parseInt(form.get("paymentTermsDays") as string) || 30,
@@ -269,6 +279,15 @@ function ContactDrawer({ open, onClose }: { open: boolean; onClose: () => void }
                   <Label htmlFor="drawer-contact-terms">Payment Terms (days)</Label>
                   <Input id="drawer-contact-terms" name="paymentTermsDays" type="number" min={0} defaultValue={30} />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="drawer-contact-locale">Preferred document language</Label>
+                <DocumentLocaleSelect
+                  id="drawer-contact-locale"
+                  value={preferredLocale}
+                  locales={documentLocales}
+                  onChange={setPreferredLocale}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="drawer-contact-tax">Tax Number</Label>
@@ -2381,6 +2400,8 @@ function EmployeeDrawer({ open, onClose }: { open: boolean; onClose: () => void 
   const [bankAccountNumber, setBankAccountNumber] = useState("");
   const [empStartDate, setEmpStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [empCurrency, setEmpCurrency] = useState("USD");
+  const [preferredLocale, setPreferredLocale] = useState<AppLocale | "">("");
+  const documentLocales = useDocumentLocales();
 
   useEffect(() => {
     if (!open) {
@@ -2388,6 +2409,7 @@ function EmployeeDrawer({ open, onClose }: { open: boolean; onClose: () => void 
       setSalary(""); setPayFrequency("monthly"); setTaxRate("20");
       setBankAccountNumber(""); setEmpStartDate(new Date().toISOString().split("T")[0]);
       setEmpCurrency("USD");
+      setPreferredLocale("");
     }
   }, [open]);
 
@@ -2405,6 +2427,7 @@ function EmployeeDrawer({ open, onClose }: { open: boolean; onClose: () => void 
         body: JSON.stringify({
           name: empName,
           email: email || null,
+          preferredLocale: preferredLocale || null,
           employeeNumber,
           position: position || null,
           salary: Math.round(parseFloat(salary) * 100),
@@ -2465,6 +2488,15 @@ function EmployeeDrawer({ open, onClose }: { open: boolean; onClose: () => void 
                   <Label>Position</Label>
                   <Input value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Software Engineer" />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="drawer-employee-locale">Preferred document language</Label>
+                <DocumentLocaleSelect
+                  id="drawer-employee-locale"
+                  value={preferredLocale}
+                  locales={documentLocales}
+                  onChange={setPreferredLocale}
+                />
               </div>
             </div>
 

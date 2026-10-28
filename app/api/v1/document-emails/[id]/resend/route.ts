@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { getAuthContext } from "@/lib/api/auth-context";
 import { handleError, notFound } from "@/lib/api/response";
 import { sendDocumentEmail } from "@/lib/email/document-sender";
+import { getDocumentTemplateForRecipient } from "@/lib/documents/template-locale";
 
 export async function POST(
   request: Request,
@@ -43,6 +44,7 @@ export async function POST(
         });
 
         if (inv) {
+          const template = await getDocumentTemplateForRecipient({ organizationId: ctx.organizationId, type: "invoice", preferredLocale: inv.contact?.preferredLocale });
           const buf = await renderInvoicePdf(
             {
               invoiceNumber: inv.invoiceNumber,
@@ -61,9 +63,9 @@ export async function POST(
               total: inv.total,
               notes: inv.notes,
             },
-            { name: org?.name || "" },
-            inv.contact ? { name: inv.contact.name } : { name: "Unknown" },
-            {}
+            { name: org?.name || "", documentLocale: org?.documentLocale, enabledLocales: org?.enabledLocales },
+            inv.contact ? { name: inv.contact.name, preferredLocale: inv.contact.preferredLocale } : { name: "Unknown" },
+            template || {}
           );
           pdfBuffer = Buffer.from(buf);
           pdfFilename = `invoice-${inv.invoiceNumber}.pdf`;

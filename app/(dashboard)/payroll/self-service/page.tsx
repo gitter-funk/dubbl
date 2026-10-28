@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { User, FileText, CalendarDays, Clock, Send, Save } from "lucide-react";
+import { User, FileText, CalendarDays, Clock, Send, Save, Download } from "lucide-react";
 import { Section } from "@/components/dashboard/section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -183,9 +183,27 @@ export default function SelfServicePage() {
                     <p className="text-sm">{ps.payrollRun?.payPeriodStart} to {ps.payrollRun?.payPeriodEnd}</p>
                     <p className="text-xs text-muted-foreground">{new Date(ps.generatedAt).toLocaleDateString()}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-mono tabular-nums">{formatMoney(ps.grossAmount)}</p>
-                    <p className="text-xs text-muted-foreground font-mono">Net: {formatMoney(ps.netAmount)}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-sm font-mono tabular-nums">{formatMoney(ps.grossAmount)}</p>
+                      <p className="text-xs text-muted-foreground font-mono">Net: {formatMoney(ps.netAmount)}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-label="Download payslip"
+                      onClick={async () => {
+                        if (!orgId) return;
+                        const response = await fetch(`/api/v1/payroll/self-service/payslips/${ps.id}/pdf`, { headers: { "x-organization-id": orgId } });
+                        if (!response.ok) { toast.error("Failed to download payslip"); return; }
+                        const url = URL.createObjectURL(await response.blob());
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `payslip-${ps.id}.pdf`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    ><Download className="size-3.5" /></Button>
                   </div>
                 </div>
               ))}

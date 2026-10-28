@@ -33,6 +33,8 @@ import { notDeleted, softDelete } from "@/lib/db/soft-delete";
 import { requireRole } from "@/lib/api/require-role";
 import { wrapTool } from "@/lib/mcp/errors";
 import { checkResourceLimit, checkMultiCurrency } from "@/lib/api/check-limit";
+import { locales } from "@/lib/i18n/locales";
+import { isLocaleEnabledForOrganization } from "@/lib/i18n/locale-policy";
 import { logAudit } from "@/lib/api/audit";
 import type { AuthContext } from "@/lib/api/auth-context";
 
@@ -168,6 +170,7 @@ export function registerContactTools(server: McpServer, ctx: AuthContext) {
       name: z.string().describe("Contact name"),
       email: z.string().optional().describe("Email address"),
       phone: z.string().optional().describe("Phone number"),
+      preferredLocale: z.enum(locales).nullable().optional().describe("Preferred language for invoices and customer/supplier documents: en, fr, or fr-CA; omit to use the organization default"),
       taxNumber: z
         .string()
         .optional()
@@ -213,6 +216,10 @@ export function registerContactTools(server: McpServer, ctx: AuthContext) {
       wrapTool(ctx, async () => {
         requireRole(ctx, "manage:contacts");
 
+        if (!(await isLocaleEnabledForOrganization(ctx.organizationId, params.preferredLocale))) {
+          throw new Error("This document language is not enabled for the organization");
+        }
+
         await checkResourceLimit(ctx.organizationId, contact, contact.organizationId, "contacts", contact.deletedAt);
         await checkMultiCurrency(ctx.organizationId, params.currencyCode ?? "USD");
 
@@ -223,6 +230,7 @@ export function registerContactTools(server: McpServer, ctx: AuthContext) {
             name: params.name,
             email: params.email ?? null,
             phone: params.phone ?? null,
+            preferredLocale: params.preferredLocale ?? null,
             taxNumber: params.taxNumber ?? null,
             type: params.type,
             paymentTermsDays: params.paymentTermsDays,
@@ -247,6 +255,7 @@ export function registerContactTools(server: McpServer, ctx: AuthContext) {
       name: z.string().optional().describe("New name"),
       email: z.string().optional().describe("New email"),
       phone: z.string().optional().describe("New phone"),
+      preferredLocale: z.enum(locales).nullable().optional().describe("Preferred language for invoices and customer/supplier documents: en, fr, or fr-CA; null clears the preference and uses the organization default"),
       taxNumber: z.string().optional().describe("New tax number"),
       type: z
         .enum(["customer", "supplier", "both"])
@@ -284,6 +293,10 @@ export function registerContactTools(server: McpServer, ctx: AuthContext) {
     (params) =>
       wrapTool(ctx, async () => {
         requireRole(ctx, "manage:contacts");
+
+        if (!(await isLocaleEnabledForOrganization(ctx.organizationId, params.preferredLocale))) {
+          throw new Error("This document language is not enabled for the organization");
+        }
 
         const existing = await db.query.contact.findFirst({
           where: and(

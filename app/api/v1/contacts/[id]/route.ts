@@ -9,11 +9,14 @@ import { logAudit, diffChanges } from "@/lib/api/audit";
 import { notDeleted, softDelete } from "@/lib/db/soft-delete";
 import { z } from "zod";
 import { currencyCodeSchema } from "@/lib/currency/zod";
+import { locales } from "@/lib/i18n/locales";
+import { isLocaleEnabledForOrganization } from "@/lib/i18n/locale-policy";
 
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().nullable().optional(),
   phone: z.string().nullable().optional(),
+  preferredLocale: z.enum(locales).nullable().optional(),
   taxNumber: z.string().nullable().optional(),
   type: z.enum(["customer", "supplier", "both"]).optional(),
   paymentTermsDays: z.number().int().min(0).optional(),
@@ -71,6 +74,9 @@ export async function PATCH(
 
     const body = await request.json();
     const parsed = updateSchema.parse(body);
+    if (!(await isLocaleEnabledForOrganization(ctx.organizationId, parsed.preferredLocale))) {
+      return NextResponse.json({ error: "This document language is not enabled for the organization" }, { status: 400 });
+    }
 
     const existing = await db.query.contact.findFirst({
       where: and(

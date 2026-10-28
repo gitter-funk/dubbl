@@ -1,23 +1,27 @@
 import { db } from "@/lib/db";
 import { siteSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { locales } from "@/lib/i18n/locales";
 
 type SiteSettingKey =
   | "registration_mode"
   | "allowed_email_domains"
   | "allow_user_org_creation"
-  | "self_hosted_unlimited";
+  | "self_hosted_unlimited"
+  | "enabled_locales";
 
 const DEFAULTS: Record<SiteSettingKey, string> = {
   registration_mode: "open",
   allowed_email_domains: "",
   allow_user_org_creation: "true",
   self_hosted_unlimited: "auto",
+  enabled_locales: locales.join(","),
 };
 
 const ENV_FALLBACKS: Partial<Record<SiteSettingKey, string>> = {
   registration_mode: "REGISTRATION_MODE",
   allowed_email_domains: "ALLOWED_EMAIL_DOMAINS",
+  enabled_locales: "DUBBL_ENABLED_LOCALES",
 };
 
 // 30-second in-memory cache

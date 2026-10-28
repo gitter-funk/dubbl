@@ -7,6 +7,9 @@ import { notDeleted, softDelete } from "@/lib/db/soft-delete";
 import { ok, notFound, handleError } from "@/lib/api/response";
 import { logAudit, diffChanges } from "@/lib/api/audit";
 import { z } from "zod";
+import { locales } from "@/lib/i18n/locales";
+import { isLocaleEnabledForOrganization } from "@/lib/i18n/locale-policy";
+import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
@@ -33,6 +36,7 @@ export async function GET(
 
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
+  locale: z.enum(locales).optional(),
   headerHtml: z.string().nullable().optional(),
   footerHtml: z.string().nullable().optional(),
   logoUrl: z.string().nullable().optional(),
@@ -66,6 +70,22 @@ export async function PATCH(
     });
 
     if (!existing) return notFound("Template");
+
+    if (parsed.locale && !(await isLocaleEnabledForOrganization(ctx.organizationId, parsed.locale))) {
+      return NextResponse.json({ error: "This template locale is not enabled for the organization" }, { status: 400 });
+    }
+
+    if (parsed.isDefault ?? existing.isDefault) {
+      await db.update(documentTemplate)
+        .set({ isDefault: false })
+        .where(and(
+          eq(documentTemplate.organizationId, ctx.organizationId),
+          eq(documentTemplate.type, existing.type),
+          eq(documentTemplate.locale, parsed.locale ?? existing.locale),
+          eq(documentTemplate.isDefault, true),
+          notDeleted(documentTemplate.deletedAt),
+        ));
+    }
 
     const [updated] = await db
       .update(documentTemplate)

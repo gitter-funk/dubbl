@@ -20,6 +20,7 @@ import { seedDefaultAccounts } from "@/lib/db/default-accounts";
 import { ensureTaxRatesSeeded } from "@/lib/api/tax-profiles";
 import { toAppUrl } from "@/lib/public-url";
 import { locales } from "@/lib/i18n/locales";
+import { getInstanceLocales } from "@/lib/i18n/locale-policy";
 
 const updateSchema = z
   .object({
@@ -29,6 +30,7 @@ const updateSchema = z
     businessType: z.string().min(1).optional().nullable(),
     defaultCurrency: z.string().min(1).optional(),
     documentLocale: z.enum(locales).optional(),
+    enabledLocales: z.array(z.enum(locales)).min(1).optional(),
     fiscalYearStartMonth: z.number().min(1).max(12).optional(),
     countryCode: z.string().max(2).nullable().optional(),
     taxId: z.string().nullable().optional(),
@@ -74,7 +76,7 @@ export async function GET(request: Request) {
       const org = await db.query.organization.findFirst({
         where: eq(organization.id, ctx.organizationId),
       });
-      return NextResponse.json({ organization: org });
+      return NextResponse.json({ organization: org, availableLocales: await getInstanceLocales() });
     }
 
     // Otherwise list all orgs for the session user
@@ -238,6 +240,26 @@ export async function PATCH(request: Request) {
     const existing = await db.query.organization.findFirst({
       where: eq(organization.id, ctx.organizationId),
     });
+    const instanceLocales = await getInstanceLocales();
+    const requestedLocales = (parsed.enabledLocales ?? existing?.enabledLocales ?? ["en"]) as (typeof locales)[number][];
+    if (requestedLocales.some((locale) => !instanceLocales.includes(locale))) {
+      return NextResponse.json(
+        { error: "An organization can only enable locales supported by this instance" },
+        { status: 400 },
+      );
+    }
+    if (parsed.documentLocale && !requestedLocales.includes(parsed.documentLocale)) {
+      return NextResponse.json(
+        { error: "The default document language must be enabled for this organization" },
+        { status: 400 },
+      );
+    }
+    if (parsed.enabledLocales && !parsed.documentLocale && !requestedLocales.includes((existing?.documentLocale ?? "en") as (typeof locales)[number])) {
+      return NextResponse.json(
+        { error: "Enable the current default document language or choose a new default" },
+        { status: 400 },
+      );
+    }
 
     // Base (functional) currency is the pivot every report is measured in.
     // Validate it, and treat it as immutable once the books have activity —
