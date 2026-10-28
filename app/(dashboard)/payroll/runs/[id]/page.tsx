@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { ArrowLeft, Play, Search, X, FileText, CheckCircle2, XCircle, Gift, ScrollText, Send, Plus, BookOpen, ArrowRight } from "lucide-react";
@@ -80,23 +81,7 @@ const statusColors: Record<string, string> = {
   pending_approval: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
 };
 
-// Plain-language payroll status labels for non-accountants.
-const statusLabels: Record<string, string> = {
-  draft: "Not finished",
-  processing: "Finishing",
-  completed: "Finished & recorded",
-  void: "Cancelled",
-  pending_approval: "Waiting for sign-off",
-};
-
-const bonusTypes = [
-  { value: "performance", label: "Performance" },
-  { value: "signing", label: "Signing" },
-  { value: "holiday", label: "Holiday" },
-  { value: "referral", label: "Referral" },
-  { value: "retention", label: "Retention" },
-  { value: "other", label: "Other" },
-];
+const bonusTypes = ["performance", "signing", "holiday", "referral", "spot", "retention", "other"] as const;
 
 const anim = (delay: number) => ({
   initial: { opacity: 0, y: 12 } as const,
@@ -105,6 +90,8 @@ const anim = (delay: number) => ({
 });
 
 export default function PayrollRunDetailPage() {
+  const t = useTranslations("Payroll.RunDetails");
+  const locale = useLocale();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [run, setRun] = useState<PayrollRunDetail | null>(null);
@@ -117,7 +104,7 @@ export default function PayrollRunDetailPage() {
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
-  useDocumentTitle("Payroll · Run Details");
+  useDocumentTitle(t("pageTitle"));
 
   const [bonuses, setBonuses] = useState<Bonus[]>([]);
   const [bonusDialogOpen, setBonusDialogOpen] = useState(false);
@@ -159,10 +146,9 @@ export default function PayrollRunDetailPage() {
 
   async function handleProcess() {
     const confirmed = await confirm({
-      title: "Finish this payroll and record it?",
-      description:
-        "This locks in the pay amounts and records the wages and taxes in your books. It can't be undone.",
-      confirmLabel: "Finish and record",
+      title: t("finishConfirmTitle"),
+      description: t("finishConfirmDescription"),
+      confirmLabel: t("finishAndRecord"),
       destructive: true,
     });
     if (!confirmed) return;
@@ -177,12 +163,12 @@ export default function PayrollRunDetailPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        throw new Error(data.error || t("finishFailed"));
       }
-      toast.success("Payroll finished and recorded");
+      toast.success(t("finished"));
       window.location.reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't finish the payroll");
+      toast.error(err instanceof Error ? err.message : t("finishFailed"));
     } finally {
       setProcessing(false);
     }
@@ -200,12 +186,12 @@ export default function PayrollRunDetailPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        throw new Error(data.error || t("approvalSubmitFailed"));
       }
-      toast.success("Sent for sign-off");
+      toast.success(t("sentForApproval"));
       window.location.reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't send for sign-off");
+      toast.error(err instanceof Error ? err.message : t("approvalSubmitFailed"));
     } finally {
       setSubmittingApproval(false);
     }
@@ -213,9 +199,9 @@ export default function PayrollRunDetailPage() {
 
   async function handleApprove() {
     const confirmed = await confirm({
-      title: "Approve this payroll?",
-      description: "This marks the payroll as approved and ready to finish.",
-      confirmLabel: "Approve",
+      title: t("approveConfirmTitle"),
+      description: t("approveConfirmDescription"),
+      confirmLabel: t("approve"),
     });
     if (!confirmed) return;
     const orgId = localStorage.getItem("activeOrgId");
@@ -229,12 +215,12 @@ export default function PayrollRunDetailPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        throw new Error(data.error || t("approveFailed"));
       }
-      toast.success("Payroll approved");
+      toast.success(t("approved"));
       window.location.reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't approve the payroll");
+      toast.error(err instanceof Error ? err.message : t("approveFailed"));
     } finally {
       setApproving(false);
     }
@@ -242,9 +228,9 @@ export default function PayrollRunDetailPage() {
 
   async function handleReject() {
     const confirmed = await confirm({
-      title: "Reject this payroll run?",
-      description: "This will send the run back to draft status.",
-      confirmLabel: "Reject",
+      title: t("rejectConfirmTitle"),
+      description: t("rejectConfirmDescription"),
+      confirmLabel: t("reject"),
       destructive: true,
     });
     if (!confirmed) return;
@@ -259,12 +245,12 @@ export default function PayrollRunDetailPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        throw new Error(data.error || t("rejectFailed"));
       }
-      toast.success("Payroll run rejected");
+      toast.success(t("rejected"));
       window.location.reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to reject");
+      toast.error(err instanceof Error ? err.message : t("rejectFailed"));
     } finally {
       setRejecting(false);
     }
@@ -282,12 +268,12 @@ export default function PayrollRunDetailPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        throw new Error(data.error || t("payslipsGenerateFailed"));
       }
-      toast.success("Payslips generated");
+      toast.success(t("payslipsGenerated"));
       router.push(`/payroll/runs/${id}/payslips`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to generate payslips");
+      toast.error(err instanceof Error ? err.message : t("payslipsGenerateFailed"));
     } finally {
       setGeneratingPayslips(false);
     }
@@ -297,7 +283,7 @@ export default function PayrollRunDetailPage() {
     const orgId = localStorage.getItem("activeOrgId");
     if (!orgId) return;
     if (!bonusForm.employeeId || !bonusForm.bonusType || !bonusForm.amount) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("requiredFields"));
       return;
     }
     setCreatingBonus(true);
@@ -318,17 +304,17 @@ export default function PayrollRunDetailPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        throw new Error(data.error || t("bonusAddFailed"));
       }
       const data = await res.json();
       if (data.bonus) {
         setBonuses((prev) => [...prev, data.bonus]);
       }
-      toast.success("Bonus added");
+      toast.success(t("bonusAdded"));
       setBonusDialogOpen(false);
       setBonusForm({ employeeId: "", bonusType: "", amount: "", description: "" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add bonus");
+      toast.error(err instanceof Error ? err.message : t("bonusAddFailed"));
     } finally {
       setCreatingBonus(false);
     }
@@ -344,9 +330,9 @@ export default function PayrollRunDetailPage() {
           className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="size-3.5" />
-          Back to runs
+          {t("backToRuns")}
         </button>
-        <p className="text-sm text-muted-foreground">Payroll run not found</p>
+        <p className="text-sm text-muted-foreground">{t("runNotFound")}</p>
       </ContentReveal>
     );
   }
@@ -367,7 +353,7 @@ export default function PayrollRunDetailPage() {
         className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="size-3.5" />
-        Back to runs
+        {t("backToRuns")}
       </button>
 
       {/* Header */}
@@ -389,14 +375,14 @@ export default function PayrollRunDetailPage() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg font-semibold">
-                {run.payPeriodStart} to {run.payPeriodEnd}
+                {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${run.payPeriodStart}T12:00:00Z`))} {t("to")} {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${run.payPeriodEnd}T12:00:00Z`))}
               </h1>
               <Badge variant="outline" className={statusColors[run.status] || ""}>
-                {statusLabels[run.status] || run.status.replace(/_/g, " ")}
+                {t(`statuses.${run.status === "pending_approval" ? "pendingApproval" : run.status}` as "statuses.draft" | "statuses.processing" | "statuses.completed" | "statuses.void" | "statuses.pendingApproval")}
               </Badge>
               {run.runType && run.runType !== "regular" && (
                 <Badge variant="outline" className="capitalize">
-                  {run.runType.replace(/_/g, " ")}
+                  {t(`runTypes.${run.runType === "bonus_only" ? "bonus" : run.runType === "off_cycle" ? "offCycle" : run.runType}` as "runTypes.regular" | "runTypes.termination" | "runTypes.bonus" | "runTypes.correction" | "runTypes.offCycle")}
                 </Badge>
               )}
               {run.approvalStatus && (
@@ -404,12 +390,12 @@ export default function PayrollRunDetailPage() {
                   variant="outline"
                   className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
                 >
-                  {run.approvalStatus.replace(/_/g, " ")}
+                  {t(`approvalStatuses.${run.approvalStatus === "pending_approval" ? "pending" : run.approvalStatus}` as "approvalStatuses.pending" | "approvalStatuses.approved" | "approvalStatuses.rejected")}
                 </Badge>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {run.processedAt ? `Finished and recorded ${run.processedAt}` : "Not finished yet"}
+              {run.processedAt ? t("finishedRecorded", { date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(run.processedAt)) }) : t("notFinishedYet")}
             </p>
           </div>
         </div>
@@ -421,20 +407,20 @@ export default function PayrollRunDetailPage() {
                 size="sm"
                 onClick={handleSubmitForApproval}
                 disabled={submittingApproval}
-                title="Send this payroll to someone for sign-off before it's finished"
+                title={t("sendForApprovalHelp")}
               >
                 <Send className="mr-1.5 size-3.5" />
-                {submittingApproval ? "Sending..." : "Send for sign-off"}
+                {submittingApproval ? t("sending") : t("sendForApproval")}
               </Button>
               <Button
                 size="sm"
                 onClick={handleProcess}
                 disabled={processing}
                 className="bg-emerald-600 hover:bg-emerald-700"
-                title="Lock in the pay amounts and record the wages and taxes in your books"
+                title={t("finishAndRecordHelp")}
               >
                 <Play className="mr-1.5 size-3.5" />
-                {processing ? "Finishing..." : "Finish & record payroll"}
+                {processing ? t("finishing") : t("finishAndRecordPayroll")}
               </Button>
             </>
           )}
@@ -447,7 +433,7 @@ export default function PayrollRunDetailPage() {
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 <CheckCircle2 className="mr-1.5 size-3.5" />
-                {approving ? "Approving..." : "Approve"}
+                {approving ? t("approving") : t("approve")}
               </Button>
               <Button
                 variant="destructive"
@@ -456,7 +442,7 @@ export default function PayrollRunDetailPage() {
                 disabled={rejecting}
               >
                 <XCircle className="mr-1.5 size-3.5" />
-                {rejecting ? "Rejecting..." : "Reject"}
+                {rejecting ? t("rejecting") : t("reject")}
               </Button>
             </>
           )}
@@ -466,16 +452,16 @@ export default function PayrollRunDetailPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <motion.div {...anim(0)} className="rounded-xl border bg-card p-4">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Pay before deductions</p>
-          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">{formatMoney(run.totalGross)}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("beforeDeductions")}</p>
+          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">{formatMoney(run.totalGross, "USD", locale)}</p>
         </motion.div>
         <motion.div {...anim(0.05)} className="rounded-xl border bg-card p-4">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Taxes &amp; deductions</p>
-          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate text-red-600 dark:text-red-400">{formatMoney(run.totalDeductions)}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("taxesAndDeductions")}</p>
+          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate text-red-600 dark:text-red-400">{formatMoney(run.totalDeductions, "USD", locale)}</p>
         </motion.div>
         <motion.div {...anim(0.09)} className="rounded-xl border bg-card p-4">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Take-home pay</p>
-          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate text-emerald-600 dark:text-emerald-400">{formatMoney(run.totalNet)}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("takeHomePay")}</p>
+          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate text-emerald-600 dark:text-emerald-400">{formatMoney(run.totalNet, "USD", locale)}</p>
         </motion.div>
       </div>
 
@@ -491,9 +477,9 @@ export default function PayrollRunDetailPage() {
               <BookOpen className="size-5 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium">View accounting entry</p>
+              <p className="text-sm font-medium">{t("viewAccountingEntry")}</p>
               <p className="text-xs text-muted-foreground truncate">
-                Wages {formatMoney(run.totalGross)} · Taxes &amp; deductions {formatMoney(run.totalDeductions)} · Net paid {formatMoney(run.totalNet)}
+                {t("accountingSummary", { wages: formatMoney(run.totalGross, "USD", locale), deductions: formatMoney(run.totalDeductions, "USD", locale), net: formatMoney(run.totalNet, "USD", locale) })}
               </p>
             </div>
           </div>
@@ -505,8 +491,8 @@ export default function PayrollRunDetailPage() {
             <BookOpen className="size-5 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-sm font-medium">No accounting entry linked</p>
-            <p className="text-xs text-muted-foreground">This run was finished but no journal entry is on record.</p>
+            <p className="text-sm font-medium">{t("noAccountingEntry")}</p>
+            <p className="text-xs text-muted-foreground">{t("noAccountingEntryDescription")}</p>
           </div>
         </div>
       ) : null}
@@ -514,11 +500,11 @@ export default function PayrollRunDetailPage() {
       {/* Employee items */}
       <div className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-sm font-semibold">Employees ({run.items?.length || 0})</h3>
+          <h3 className="text-sm font-semibold">{t("employeesCount", { count: run.items?.length || 0 })}</h3>
           <div className="relative sm:max-w-xs w-full">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search employees..."
+              placeholder={t("searchEmployees")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 pr-8 h-8 text-sm"
@@ -540,7 +526,7 @@ export default function PayrollRunDetailPage() {
               <FileText className="size-5 text-muted-foreground" />
             </div>
             <p className="text-sm font-medium">
-              {search ? "No employees match your search" : "No employees in this run"}
+              {search ? t("noEmployeesMatchSearch") : t("noEmployeesInRun")}
             </p>
           </div>
         ) : (
@@ -556,7 +542,7 @@ export default function PayrollRunDetailPage() {
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {item.type && (
                       <Badge variant="outline" className="text-[9px] h-4 capitalize">
-                        {item.type.replace(/_/g, " ")}
+                        {t(`itemTypes.${item.type}` as "itemTypes.regularSalary" | "itemTypes.hourlyPay" | "itemTypes.overtime" | "itemTypes.milestoneBonus" | "itemTypes.projectBonus" | "itemTypes.commission" | "itemTypes.deduction" | "itemTypes.reimbursement")}
                       </Badge>
                     )}
                     {item.description && (
@@ -574,20 +560,20 @@ export default function PayrollRunDetailPage() {
                     </Badge>
                   )}
                   <div className="hidden sm:block text-right">
-                    <p className="text-xs text-muted-foreground">Before deductions</p>
-                    <p className="text-sm font-mono tabular-nums">{formatMoney(item.grossAmount, item.currency ?? "USD")}</p>
+                    <p className="text-xs text-muted-foreground">{t("beforeDeductions")}</p>
+                    <p className="text-sm font-mono tabular-nums">{formatMoney(item.grossAmount, item.currency ?? "USD", locale)}</p>
                   </div>
                   <div className="hidden sm:block text-right">
-                    <p className="text-xs text-muted-foreground">Tax</p>
-                    <p className="text-sm font-mono tabular-nums">{formatMoney(item.taxAmount, item.currency ?? "USD")}</p>
+                    <p className="text-xs text-muted-foreground">{t("tax")}</p>
+                    <p className="text-sm font-mono tabular-nums">{formatMoney(item.taxAmount, item.currency ?? "USD", locale)}</p>
                   </div>
                   <div className="hidden sm:block text-right">
-                    <p className="text-xs text-muted-foreground">Other deductions</p>
-                    <p className="text-sm font-mono tabular-nums">{formatMoney(item.deductions, item.currency ?? "USD")}</p>
+                    <p className="text-xs text-muted-foreground">{t("otherDeductions")}</p>
+                    <p className="text-sm font-mono tabular-nums">{formatMoney(item.deductions, item.currency ?? "USD", locale)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Take-home</p>
-                    <p className="text-sm font-mono tabular-nums font-medium">{formatMoney(item.netAmount, item.currency ?? "USD")}</p>
+                    <p className="text-xs text-muted-foreground">{t("takeHome")}</p>
+                    <p className="text-sm font-mono tabular-nums font-medium">{formatMoney(item.netAmount, item.currency ?? "USD", locale)}</p>
                   </div>
                 </div>
               </div>
@@ -601,31 +587,31 @@ export default function PayrollRunDetailPage() {
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold flex items-center gap-1.5">
             <Gift className="size-4" />
-            Bonuses ({bonuses.length})
+            {t("bonusesCount", { count: bonuses.length })}
           </h3>
           <Dialog open={bonusDialogOpen} onOpenChange={setBonusDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <Plus className="mr-1.5 size-3.5" />
-                Add Bonus
+                {t("addBonus")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Bonus</DialogTitle>
+                <DialogTitle>{t("addBonus")}</DialogTitle>
                 <DialogDescription>
-                  Add a bonus for an employee in this payroll run.
+                  {t("addBonusDescription")}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="space-y-2">
-                  <Label>Employee</Label>
+                  <Label>{t("employee")}</Label>
                   <Select
                     value={bonusForm.employeeId}
                     onValueChange={(v) => setBonusForm((f) => ({ ...f, employeeId: v }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select employee" />
+                      <SelectValue placeholder={t("selectEmployee")} />
                     </SelectTrigger>
                     <SelectContent>
                       {(run.items || []).map((item) =>
@@ -639,25 +625,25 @@ export default function PayrollRunDetailPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Bonus Type</Label>
+                  <Label>{t("bonusType")}</Label>
                   <Select
                     value={bonusForm.bonusType}
                     onValueChange={(v) => setBonusForm((f) => ({ ...f, bonusType: v }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder={t("selectType")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {bonusTypes.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
+                      {bonusTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {t(`bonusTypes.${type}` as "bonusTypes.performance" | "bonusTypes.signing" | "bonusTypes.holiday" | "bonusTypes.referral" | "bonusTypes.spot" | "bonusTypes.retention" | "bonusTypes.other")}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Amount</Label>
+                  <Label>{t("amount")}</Label>
                   <CurrencyInput
                     prefix="$"
                     value={bonusForm.amount}
@@ -665,9 +651,9 @@ export default function PayrollRunDetailPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Description</Label>
+                  <Label>{t("description")}</Label>
                   <Textarea
-                    placeholder="Optional description..."
+                    placeholder={t("descriptionPlaceholder")}
                     value={bonusForm.description}
                     onChange={(e) => setBonusForm((f) => ({ ...f, description: e.target.value }))}
                   />
@@ -679,7 +665,7 @@ export default function PayrollRunDetailPage() {
                   disabled={creatingBonus}
                   size="sm"
                 >
-                  {creatingBonus ? "Adding..." : "Add Bonus"}
+                  {creatingBonus ? t("adding") : t("addBonus")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -691,8 +677,8 @@ export default function PayrollRunDetailPage() {
             <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted mb-3">
               <Gift className="size-5 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">No bonuses added</p>
-            <p className="text-xs text-muted-foreground mt-1">Add bonuses for employees in this payroll run</p>
+            <p className="text-sm font-medium">{t("noBonuses")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("noBonusesDescription")}</p>
           </div>
         ) : (
           <div className="rounded-xl border bg-card divide-y">
@@ -705,7 +691,7 @@ export default function PayrollRunDetailPage() {
                   <p className="text-sm font-medium truncate">{bonus.employee?.name || "-"}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Badge variant="outline" className="text-[9px] h-4 capitalize">
-                      {bonus.bonusType.replace(/_/g, " ")}
+                      {t(`bonusTypes.${bonus.bonusType}` as "bonusTypes.performance" | "bonusTypes.signing" | "bonusTypes.holiday" | "bonusTypes.referral" | "bonusTypes.spot" | "bonusTypes.retention" | "bonusTypes.other")}
                     </Badge>
                     {bonus.description && (
                       <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{bonus.description}</span>
@@ -713,7 +699,7 @@ export default function PayrollRunDetailPage() {
                   </div>
                 </div>
                 <p className="text-sm font-mono tabular-nums font-medium shrink-0">
-                  {formatMoney(bonus.amount)}
+                  {formatMoney(bonus.amount, "USD", locale)}
                 </p>
               </div>
             ))}
@@ -730,7 +716,7 @@ export default function PayrollRunDetailPage() {
             disabled={generatingPayslips}
           >
             <ScrollText className="mr-1.5 size-3.5" />
-            {generatingPayslips ? "Generating..." : "Generate Payslips"}
+            {generatingPayslips ? t("generating") : t("generatePayslips")}
           </Button>
           <Button
             variant="outline"
@@ -738,7 +724,7 @@ export default function PayrollRunDetailPage() {
             onClick={() => router.push(`/payroll/runs/${id}/payslips`)}
           >
             <ScrollText className="mr-1.5 size-3.5" />
-            View Payslips
+            {t("viewPayslips")}
           </Button>
         </div>
       )}
