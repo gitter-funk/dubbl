@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, Scale, Percent, Pencil, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -50,13 +51,13 @@ interface TaxRate {
 // Plain-language labels — the user is not an accountant. Each maps to the
 // taxRateKindEnum value persisted on the server.
 const KIND_OPTIONS: { value: string; label: string; help: string }[] = [
-  { value: "standard", label: "Standard (fully reclaimable)", help: "Normal VAT/GST you can claim back in full." },
-  { value: "partial_block", label: "Partly reclaimable", help: "You can only claim back part of the tax (set the % below)." },
-  { value: "blocked", label: "Not reclaimable", help: "Tax cannot be claimed back — it's absorbed into the cost." },
-  { value: "reverse_charge", label: "Reverse charge", help: "You account for both sides of the tax yourself (cross-border / domestic reverse charge)." },
-  { value: "exempt", label: "Exempt", help: "Exempt supply — no tax charged and none reclaimable." },
-  { value: "no_vat", label: "No tax", help: "Outside the scope of VAT/GST." },
-  { value: "sales_tax_us", label: "US sales tax", help: "US sales/use tax — charged on sales, not reclaimable on purchases." },
+  { value: "standard", label: "standard", help: "standard" },
+  { value: "partial_block", label: "partlyReclaimable", help: "partlyReclaimable" },
+  { value: "blocked", label: "notReclaimable", help: "notReclaimable" },
+  { value: "reverse_charge", label: "reverseCharge", help: "reverseCharge" },
+  { value: "exempt", label: "exempt", help: "exempt" },
+  { value: "no_vat", label: "noTax", help: "noTax" },
+  { value: "sales_tax_us", label: "usSalesTax", help: "usSalesTax" },
 ];
 
 // recoverablePercent only matters for these kinds; for everything else it is
@@ -90,6 +91,7 @@ const TYPE_COLORS = {
 // Compound-tax editor: lets the user split a rate into named sub-components
 // (e.g. GST + PST), each with its own % and optional ledger account.
 function ComponentsEditor({ components, setComponents }: { components: TaxComponent[]; setComponents: (c: TaxComponent[]) => void }) {
+  const t = useTranslations("Tax.Rates");
   function update(i: number, patch: Partial<TaxComponent>) {
     setComponents(components.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
   }
@@ -99,7 +101,7 @@ function ComponentsEditor({ components, setComponents }: { components: TaxCompon
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label>Compound parts (optional)</Label>
+        <Label>{t("compoundPartsOptional")}</Label>
         <Button
           type="button"
           variant="outline"
@@ -107,11 +109,11 @@ function ComponentsEditor({ components, setComponents }: { components: TaxCompon
           className="h-7 text-xs"
           onClick={() => setComponents([...components, { name: "", rate: 0, accountId: null }])}
         >
-          <Plus className="mr-1 size-3" />Add part
+          <Plus className="mr-1 size-3" />{t("addPart")}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        Split this tax into separate parts (for example GST and PST) when each part needs its own rate or ledger account.
+        {t("compoundPartsHelp")}
       </p>
       {components.length > 0 && (
         <div className="space-y-3 rounded-md border p-3">
@@ -119,11 +121,11 @@ function ComponentsEditor({ components, setComponents }: { components: TaxCompon
             <div key={i} className="space-y-2 rounded-md bg-muted/30 p-2">
               <div className="flex items-end gap-2">
                 <div className="flex-1 space-y-1">
-                  <Label className="text-xs">Part name</Label>
-                  <Input value={c.name} onChange={(e) => update(i, { name: e.target.value })} placeholder="e.g. PST" />
+                  <Label className="text-xs">{t("partName")}</Label>
+                  <Input value={c.name} onChange={(e) => update(i, { name: e.target.value })} placeholder={t("partNamePlaceholder")} />
                 </div>
                 <div className="w-24 space-y-1">
-                  <Label className="text-xs">Rate (%)</Label>
+                  <Label className="text-xs">{t("ratePercent")}</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -137,8 +139,8 @@ function ComponentsEditor({ components, setComponents }: { components: TaxCompon
                 </Button>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Posts to account (optional)</Label>
-                <AccountPicker value={c.accountId ?? ""} onChange={(id) => update(i, { accountId: id || null })} placeholder="Default tax account" />
+                <Label className="text-xs">{t("postsToAccountOptional")}</Label>
+                <AccountPicker value={c.accountId ?? ""} onChange={(id) => update(i, { accountId: id || null })} placeholder={t("defaultTaxAccount")} />
               </div>
             </div>
           ))}
@@ -160,27 +162,28 @@ function TaxRateFormFields({
   recoverable: string; setRecoverable: (v: string) => void;
   components: TaxComponent[]; setComponents: (c: TaxComponent[]) => void;
 }) {
+  const t = useTranslations("Tax.Rates");
   const kindHelp = KIND_OPTIONS.find((k) => k.value === kind)?.help;
   return (
     <>
-      <div className="space-y-2"><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. GST 10%" required /></div>
-      <div className="space-y-2"><Label>Rate (%)</Label><Input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="10.00" required /></div>
-      <div className="space-y-2"><Label>Applies to</Label>
+      <div className="space-y-2"><Label>{t("name")}</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("taxNamePlaceholder")} required /></div>
+      <div className="space-y-2"><Label>{t("ratePercent")}</Label><Input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="10.00" required /></div>
+      <div className="space-y-2"><Label>{t("appliesTo")}</Label>
         <Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="sales">Sales</SelectItem><SelectItem value="purchase">Purchase</SelectItem><SelectItem value="both">Both</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="sales">{t("typeSales")}</SelectItem><SelectItem value="purchase">{t("typePurchase")}</SelectItem><SelectItem value="both">{t("typeBoth")}</SelectItem></SelectContent>
         </Select>
       </div>
-      <div className="space-y-2"><Label>Tax treatment</Label>
+      <div className="space-y-2"><Label>{t("taxTreatment")}</Label>
         <Select value={kind} onValueChange={setKind}><SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            {KIND_OPTIONS.map((k) => (<SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>))}
+            {KIND_OPTIONS.map((k) => (<SelectItem key={k.value} value={k.value}>{t(`kinds.${k.label}`)}</SelectItem>))}
           </SelectContent>
         </Select>
-        {kindHelp && <p className="text-xs text-muted-foreground">{kindHelp}</p>}
+        {kindHelp && <p className="text-xs text-muted-foreground">{t(`kindHelp.${kindHelp}`)}</p>}
       </div>
       {RECOVERABLE_KINDS.has(kind) && (
         <div className="space-y-2">
-          <Label>Reclaimable amount (%)</Label>
+          <Label>{t("reclaimableAmountPercent")}</Label>
           <Input
             type="number"
             step="0.01"
@@ -190,7 +193,7 @@ function TaxRateFormFields({
             onChange={(e) => setRecoverable(e.target.value)}
             placeholder="100"
           />
-          <p className="text-xs text-muted-foreground">How much of the tax on purchases you can claim back. 100 = all of it, 50 = half.</p>
+          <p className="text-xs text-muted-foreground">{t("reclaimableHelp")}</p>
         </div>
       )}
       <ComponentsEditor components={components} setComponents={setComponents} />
@@ -228,6 +231,7 @@ interface CountryProfile {
 // Shown when the org has no tax rates yet: one click seeds the country's
 // standard tax rates so the user doesn't have to type them all out by hand.
 function QuickSetup({ orgId, onSeeded }: { orgId: string | null; onSeeded: () => void }) {
+  const t = useTranslations("Tax.Rates");
   const [profiles, setProfiles] = useState<CountryProfile[]>([]);
   const [recommended, setRecommended] = useState<string | null>(null);
   const [country, setCountry] = useState<string>("");
@@ -265,18 +269,19 @@ function QuickSetup({ orgId, onSeeded }: { orgId: string | null; onSeeded: () =>
         // Empty country lets the server resolve it from the org; otherwise use the picked one.
         body: JSON.stringify(country ? { country } : {}),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error(t("setupFailed"));
       const result = await res.json();
       const created = Array.isArray(result.created) ? result.created.length : 0;
       const skipped = Array.isArray(result.skipped) ? result.skipped.length : 0;
       if (created > 0) {
-        toast.success(`Added ${created} tax rate${created === 1 ? "" : "s"}${skipped ? ` (${skipped} already existed)` : ""}`);
+        const addedMessage = t("setupRatesAdded", { count: created });
+        toast.success(skipped ? `${addedMessage} · ${t("setupRatesSkipped", { count: skipped })}` : addedMessage);
       } else {
-        toast.info("Those tax rates were already set up");
+        toast.info(t("alreadySetUp"));
       }
       onSeeded();
     } catch {
-      toast.error("Couldn't add tax rates — try again");
+      toast.error(t("setupFailed"));
     } finally {
       setSeeding(false);
     }
@@ -289,17 +294,17 @@ function QuickSetup({ orgId, onSeeded }: { orgId: string | null; onSeeded: () =>
       <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
         <Sparkles className="size-5" />
       </div>
-      <h3 className="mt-3 text-base font-semibold">Add your country&apos;s tax rates</h3>
+      <h3 className="mt-3 text-base font-semibold">{t("quickSetupTitle")}</h3>
       <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
         {recommendedName
-          ? `We can set up the standard tax rates for ${recommendedName} so you don't have to enter them one by one.`
-          : "Pick your country and we'll set up its standard tax rates so you don't have to enter them one by one."}
+          ? t("recommendedCountryDescription", { country: recommendedName })
+          : t("chooseCountryDescription")}
       </p>
       <div className="mx-auto mt-4 flex max-w-sm flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
         {profiles.length > 0 && (
           <Select value={country} onValueChange={setCountry}>
             <SelectTrigger className="sm:w-56 bg-background">
-              <SelectValue placeholder="Choose a country" />
+              <SelectValue placeholder={t("chooseCountry")} />
             </SelectTrigger>
             <SelectContent>
               {profiles.map((p) => (
@@ -314,7 +319,7 @@ function QuickSetup({ orgId, onSeeded }: { orgId: string | null; onSeeded: () =>
           className="bg-emerald-600 hover:bg-emerald-700"
         >
           <Sparkles className="mr-1.5 size-3.5" />
-          {seeding ? "Setting up..." : "Quick setup: add my country's tax rates"}
+          {seeding ? t("settingUp") : t("quickSetupAction")}
         </Button>
       </div>
     </div>
@@ -322,6 +327,7 @@ function QuickSetup({ orgId, onSeeded }: { orgId: string | null; onSeeded: () =>
 }
 
 function CreateTaxRateDialog({ open, setOpen, onCreated, orgId }: { open: boolean; setOpen: (v: boolean) => void; onCreated: () => void; orgId: string | null }) {
+  const t = useTranslations("Tax.Rates");
   const [name, setName] = useState("");
   const [rate, setRate] = useState("");
   const [type, setType] = useState("both");
@@ -340,8 +346,8 @@ function CreateTaxRateDialog({ open, setOpen, onCreated, orgId }: { open: boolea
         headers: { "Content-Type": "application/json", "x-organization-id": orgId },
         body: JSON.stringify(buildPayload({ name, rate, type, kind, recoverable, components })),
       });
-      if (!res.ok) throw new Error("Failed");
-      toast.success("Tax rate created");
+      if (!res.ok) throw new Error(t("createFailed"));
+      toast.success(t("created"));
       setOpen(false);
       setName("");
       setRate("");
@@ -350,7 +356,7 @@ function CreateTaxRateDialog({ open, setOpen, onCreated, orgId }: { open: boolea
       setRecoverable("100");
       setComponents([]);
       onCreated();
-    } catch { toast.error("Failed to create tax rate"); }
+    } catch { toast.error(t("createFailed")); }
     finally { setSaving(false); }
   }
 
@@ -358,11 +364,11 @@ function CreateTaxRateDialog({ open, setOpen, onCreated, orgId }: { open: boolea
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="mr-1.5 size-3.5" />Add Tax Rate
+          <Plus className="mr-1.5 size-3.5" />{t("addTaxRate")}
         </Button>
       </SheetTrigger>
       <SheetContent className="overflow-y-auto">
-        <SheetHeader><SheetTitle>New Tax Rate</SheetTitle></SheetHeader>
+        <SheetHeader><SheetTitle>{t("newTaxRate")}</SheetTitle></SheetHeader>
         <form onSubmit={handleCreate} className="space-y-4 px-4 pb-6">
           <TaxRateFormFields
             name={name} setName={setName}
@@ -372,7 +378,7 @@ function CreateTaxRateDialog({ open, setOpen, onCreated, orgId }: { open: boolea
             recoverable={recoverable} setRecoverable={setRecoverable}
             components={components} setComponents={setComponents}
           />
-          <Button type="submit" disabled={saving} className="w-full bg-emerald-600 hover:bg-emerald-700">{saving ? "Creating..." : "Create"}</Button>
+          <Button type="submit" disabled={saving} className="w-full bg-emerald-600 hover:bg-emerald-700">{saving ? t("creating") : t("create")}</Button>
         </form>
       </SheetContent>
     </Sheet>
@@ -380,6 +386,7 @@ function CreateTaxRateDialog({ open, setOpen, onCreated, orgId }: { open: boolea
 }
 
 export default function TaxRatesPage() {
+  const t = useTranslations("Tax.Rates");
   const [rates, setRates] = useState<TaxRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -391,7 +398,7 @@ export default function TaxRatesPage() {
   const [editRecoverable, setEditRecoverable] = useState("100");
   const [editComponents, setEditComponents] = useState<TaxComponent[]>([]);
   const [editSaving, setEditSaving] = useState(false);
-  useDocumentTitle("Tax · Tax Rates");
+  useDocumentTitle(t("pageTitle"));
 
   const orgId = typeof window !== "undefined" ? localStorage.getItem("activeOrgId") : null;
 
@@ -435,19 +442,19 @@ export default function TaxRatesPage() {
         headers: { "Content-Type": "application/json", "x-organization-id": orgId },
         body: JSON.stringify(buildPayload({ name: editName, rate: editRate, type: editType, kind: editKind, recoverable: editRecoverable, components: editComponents })),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error(t("updateFailed"));
       setEditing(null);
       await fetchRates();
-      toast.success("Tax rate updated");
-    } catch { toast.error("Failed to update tax rate"); }
+      toast.success(t("updated"));
+    } catch { toast.error(t("updateFailed")); }
     finally { setEditSaving(false); }
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tax Rates"
-        description="Define tax rates to apply on invoices and bills."
+        title={t("title")}
+        description={t("description")}
       >
         <CreateTaxRateDialog open={open} setOpen={setOpen} onCreated={fetchRates} orgId={orgId} />
       </PageHeader>
@@ -456,30 +463,30 @@ export default function TaxRatesPage() {
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Rates</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("totalRates")}</p>
             <Scale className="size-4 text-muted-foreground/50" />
           </div>
           <p className="mt-1 text-2xl font-bold tabular-nums">{rates.length}</p>
         </div>
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800/40 dark:bg-blue-950/20 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-blue-700/70 dark:text-blue-400/70">Sales Rates</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-blue-700/70 dark:text-blue-400/70">{t("salesRates")}</p>
             <div className="size-4 rounded bg-blue-500/20 flex items-center justify-center">
               <div className="size-1.5 rounded-full bg-blue-500" />
             </div>
           </div>
           <p className="mt-1 text-2xl font-bold tabular-nums text-blue-700 dark:text-blue-300">{salesCount}</p>
-          <p className="text-[11px] text-blue-600/60 dark:text-blue-400/60 mt-0.5">Applied on invoices</p>
+          <p className="text-[11px] text-blue-600/60 dark:text-blue-400/60 mt-0.5">{t("appliedOnInvoices")}</p>
         </div>
         <div className="rounded-lg border border-orange-200 bg-orange-50 dark:border-orange-800/40 dark:bg-orange-950/20 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-orange-700/70 dark:text-orange-400/70">Purchase Rates</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-orange-700/70 dark:text-orange-400/70">{t("purchaseRates")}</p>
             <div className="size-4 rounded bg-orange-500/20 flex items-center justify-center">
               <div className="size-1.5 rounded-full bg-orange-500" />
             </div>
           </div>
           <p className="mt-1 text-2xl font-bold tabular-nums text-orange-700 dark:text-orange-300">{purchaseCount}</p>
-          <p className="text-[11px] text-orange-600/60 dark:text-orange-400/60 mt-0.5">Applied on bills</p>
+          <p className="text-[11px] text-orange-600/60 dark:text-orange-400/60 mt-0.5">{t("appliedOnBills")}</p>
         </div>
       </div>
 
@@ -508,11 +515,11 @@ export default function TaxRatesPage() {
                         <p className="text-sm font-medium">{rate.name}</p>
                         {rate.isDefault && (
                           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800 text-[10px]" variant="outline">
-                            Default
+                            {t("default")}
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground capitalize">{rate.type}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{t(`types.${rate.type}`)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -525,7 +532,7 @@ export default function TaxRatesPage() {
                       "capitalize text-[10px] min-w-[58px] justify-center",
                       colors.bg, colors.border, colors.text
                     )}>
-                      {rate.type}
+                      {t(`types.${rate.type}`)}
                     </Badge>
                     <Button
                       variant="ghost"
@@ -551,7 +558,7 @@ export default function TaxRatesPage() {
 
       <Sheet open={!!editing} onOpenChange={(v) => { if (!v) setEditing(null); }}>
         <SheetContent className="overflow-y-auto">
-          <SheetHeader><SheetTitle>Edit Tax Rate</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>{t("editTaxRate")}</SheetTitle></SheetHeader>
           <form onSubmit={handleEdit} className="space-y-4 px-4">
             <TaxRateFormFields
               name={editName} setName={setEditName}
@@ -563,8 +570,8 @@ export default function TaxRatesPage() {
             />
           </form>
           <SheetFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={editSaving} className="bg-emerald-600 hover:bg-emerald-700">{editSaving ? "Saving..." : "Save Changes"}</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>{t("cancel")}</Button>
+            <Button onClick={handleEdit} disabled={editSaving} className="bg-emerald-600 hover:bg-emerald-700">{editSaving ? t("saving") : t("saveChanges")}</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

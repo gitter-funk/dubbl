@@ -18,6 +18,9 @@ const localizedSources = [
   "app/(dashboard)/settings/tags/page.tsx",
   "app/(dashboard)/sales/quotes/page.tsx",
   "app/(dashboard)/sales/page.tsx",
+  "app/(dashboard)/tax/page.tsx",
+  "app/(dashboard)/tax/layout.tsx",
+  "app/(dashboard)/tax/periods/page.tsx",
 ];
 
 function visibleLiteralStrings(sourcePath: string): string[] {
@@ -66,28 +69,26 @@ function missingMessageKeys(sourcePath: string): string[] {
     ts.ScriptKind.TSX
   );
   const english = JSON.parse(readFileSync(path.join(projectRoot, "messages/en.json"), "utf8")) as Record<string, unknown>;
-  let namespace = "";
-  let translator = "t";
+  const namespaces = new Map<string, string>();
   const usedKeys = new Set<string>();
 
-  function findTranslator(node: ts.Node) {
+  function visit(node: ts.Node) {
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && ts.isCallExpression(node.initializer)) {
       const call = node.initializer;
       if (ts.isIdentifier(call.expression) && call.expression.text === "useTranslations" && call.arguments[0] && ts.isStringLiteral(call.arguments[0])) {
-        translator = node.name.text;
-        namespace = call.arguments[0].text;
+        namespaces.set(node.name.text, call.arguments[0].text);
       }
     }
-    ts.forEachChild(node, findTranslator);
-  }
 
-  function visit(node: ts.Node) {
     if (ts.isCallExpression(node)) {
       const expression = node.expression;
-      const isTranslatorCall = ts.isIdentifier(expression)
-        ? expression.text === translator
-        : ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.expression) && expression.expression.text === translator;
-      if (isTranslatorCall && node.arguments[0] && ts.isStringLiteral(node.arguments[0])) {
+      const translatorName = ts.isIdentifier(expression)
+        ? expression.text
+        : ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.expression)
+          ? expression.expression.text
+          : null;
+      const namespace = translatorName ? namespaces.get(translatorName) : null;
+      if (namespace && node.arguments[0] && ts.isStringLiteral(node.arguments[0])) {
         usedKeys.add(`${namespace}.${node.arguments[0].text}`);
       }
     }
@@ -95,7 +96,6 @@ function missingMessageKeys(sourcePath: string): string[] {
     ts.forEachChild(node, visit);
   }
 
-  findTranslator(sourceFile);
   visit(sourceFile);
   return [...usedKeys].filter((key) => {
     let value: unknown = english;
@@ -107,7 +107,7 @@ function missingMessageKeys(sourcePath: string): string[] {
   });
 }
 
-test("localized settings sources keep visible copy in message catalogs", () => {
+test("localized settings and tax sources keep visible copy in message catalogs", () => {
   const failures = localizedSources.flatMap((source) => {
     const literals = visibleLiteralStrings(source);
     const missingKeys = missingMessageKeys(source);
@@ -121,6 +121,6 @@ test("localized settings sources keep visible copy in message catalogs", () => {
   assert.deepEqual(
     failures,
     [],
-    `Move newly added visible copy in these localized settings sources to messages/*.json:\n${failures.join("\n")}`
+    `Move newly added visible copy in these localized settings and tax sources to messages/*.json:\n${failures.join("\n")}`
   );
 });
