@@ -2173,6 +2173,64 @@
         "box5MedicareWages": "Case 5 – Salaires et pourboires assujettis à Medicare",
         "box6MedicareTax": "Case 6 – Cotisations Medicare retenues"
       }
+    },
+    "TaxLiabilities": {
+      "pageTitle": "Paie · Cotisations fiscales",
+      "title": "Cotisations fiscales sur la paie",
+      "description": "Consultez les impôts retenus lors des paies terminées, les destinataires et l’historique des versements.",
+      "recordPayment": "Enregistrer un versement",
+      "owedFromPayRuns": "À payer selon les paies",
+      "paidSoFar": "Déjà versé",
+      "stillOutstanding": "Solde à payer",
+      "whoYouPay": "Destinataires des versements",
+      "paidToDate": "Versé à ce jour",
+      "outstandingNotice": "{amount} de retenues fiscales sur la paie n’ont pas encore été versées. Enregistrez un versement pour que vos livres reflètent le solde réel à payer.",
+      "paymentsRecorded": "Versements enregistrés",
+      "noPayments": "Aucun versement de cotisations fiscales enregistré.",
+      "sheetTitle": "Enregistrer un versement de cotisations fiscales",
+      "sheetDescription": "Enregistre le versement et solde le passif correspondant dans vos livres.",
+      "payee": "Destinataire du paiement",
+      "amountPaid": "Montant versé",
+      "periodFrom": "Période du",
+      "periodTo": "Période au",
+      "start": "Début",
+      "end": "Fin",
+      "level": "Palier",
+      "paidOn": "Date du versement",
+      "paymentDate": "Date du versement",
+      "reference": "Référence",
+      "referencePlaceholder": "Numéro de confirmation / EFTPS",
+      "notes": "Notes",
+      "notesPlaceholder": "Note facultative sur ce versement",
+      "recording": "Enregistrement…",
+      "cancel": "Annuler",
+      "amountMustBePositive": "Saisissez un montant supérieur à zéro",
+      "choosePeriod": "Choisissez la période couverte par ce versement",
+      "recordFailed": "Impossible d’enregistrer le versement",
+      "paymentRecorded": "Versement enregistré",
+      "periodCovered": "Période couverte",
+      "covers": "Type de cotisation",
+      "payrollTax": "Cotisation sur la paie",
+      "amount": "Montant",
+      "jurisdictions": {
+        "federal": "Fédéral",
+        "state": "État",
+        "local": "Local"
+      },
+      "agencies": {
+        "income_tax": {
+          "name": "Autorité fiscale — impôt sur le revenu",
+          "description": "Impôt sur le revenu retenu sur la paie des employés"
+        },
+        "fica": {
+          "name": "Autorité fiscale — cotisations sur la paie",
+          "description": "Sécurité sociale, Medicare et assurance chômage"
+        },
+        "pension": {
+          "name": "Fournisseur de retraite et d’avantages sociaux",
+          "description": "Montants retenus pour la retraite et les avantages sociaux"
+        }
+      }
     }
   }
 }
