@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 import { Plus, Receipt, Search, X, Loader2 } from "lucide-react";
@@ -47,17 +48,17 @@ const statusColors: Record<string, string> = {
   paid: "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
 };
 
-function buildColumns(): Column<ExpenseClaim>[] {
+function buildColumns(t: ReturnType<typeof useTranslations<"Purchases.Expenses">>, formatDate: (date: Date) => string): Column<ExpenseClaim>[] {
   return [
     {
       key: "title",
-      header: "Title",
+      header: t("titleColumn"),
       sortKey: "title",
       render: (r) => <span className="text-sm font-medium">{r.title}</span>,
     },
     {
       key: "submittedBy",
-      header: "Submitted By",
+      header: t("submittedBy"),
       render: (r) => (
         <span className="text-sm">
           {r.submittedByUser?.name || r.submittedByUser?.email || "-"}
@@ -66,28 +67,28 @@ function buildColumns(): Column<ExpenseClaim>[] {
     },
     {
       key: "date",
-      header: "Date",
+      header: t("date"),
       sortKey: "date",
       className: "w-28",
       render: (r) => (
         <span className="text-sm">
-          {new Date(r.createdAt).toLocaleDateString()}
+          {formatDate(new Date(r.createdAt))}
         </span>
       ),
     },
     {
       key: "status",
-      header: "Status",
+      header: t("status"),
       className: "w-28",
       render: (r) => (
         <Badge variant="outline" className={statusColors[r.status] || ""}>
-          {r.status}
+          {t(`statuses.${r.status}`)}
         </Badge>
       ),
     },
     {
       key: "total",
-      header: "Amount",
+      header: t("amount"),
       sortKey: "total",
       className: "w-28 text-right",
       render: (r) => (
@@ -100,6 +101,8 @@ function buildColumns(): Column<ExpenseClaim>[] {
 }
 
 export default function ExpensesPage() {
+  const t = useTranslations("Purchases.Expenses");
+  const format = useFormatter();
   const router = useRouter();
   const { open: openDrawer } = useCreateDrawer();
   const [claims, setClaims] = useState<ExpenseClaim[]>([]);
@@ -121,9 +124,9 @@ export default function ExpensesPage() {
 
   const orgId = typeof window !== "undefined" ? localStorage.getItem("activeOrgId") : null;
 
-  useDocumentTitle("Purchases · Expenses");
+  useDocumentTitle(t("pageTitle"));
 
-  const columns = useMemo(() => buildColumns(), []);
+  const columns = useMemo(() => buildColumns(t, (date) => format.dateTime(date, { dateStyle: "medium" })), [t, format]);
 
   const buildParams = useCallback((pg: number) => {
     const params = new URLSearchParams();
@@ -258,10 +261,10 @@ export default function ExpensesPage() {
           {/* Full-width pipeline steps */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 rounded-lg border overflow-hidden mb-8">
             {[
-              { label: "Draft", desc: "Create expense claim", color: "bg-gray-400", bg: "bg-gray-50 dark:bg-gray-900/30" },
-              { label: "Submitted", desc: "Submit for review", color: "bg-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-              { label: "Approved", desc: "Manager approves", color: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-              { label: "Paid", desc: "Reimbursement sent", color: "bg-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
+              { label: t("statuses.draft"), desc: t("steps.create"), color: "bg-gray-400", bg: "bg-gray-50 dark:bg-gray-900/30" },
+              { label: t("statuses.submitted"), desc: t("steps.review"), color: "bg-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+              { label: t("statuses.approved"), desc: t("steps.approved"), color: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+              { label: t("statuses.paid"), desc: t("steps.paid"), color: "bg-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
             ].map(({ label, desc, color, bg }, i) => (
               <div key={label} className={`relative flex flex-col items-center py-6 px-3 text-center border-r last:border-r-0 ${bg}`}>
                 <div className={`absolute top-0 left-0 right-0 h-1 ${color} opacity-30`} />
@@ -295,7 +298,7 @@ export default function ExpensesPage() {
                     i % 3 === 1 ? "bg-emerald-100 text-emerald-400 dark:bg-emerald-900/40 dark:text-emerald-500" :
                     "bg-purple-100 text-purple-400 dark:bg-purple-900/40 dark:text-purple-500"
                   }`}>
-                    {i % 3 === 0 ? "submitted" : i % 3 === 1 ? "approved" : "paid"}
+                    {i % 3 === 0 ? t("statuses.submitted") : i % 3 === 1 ? t("statuses.approved") : t("statuses.paid")}
                   </div>
                   <div className={`h-2.5 rounded bg-muted/40 ${i % 2 === 0 ? "w-16" : "w-14"}`} />
                 </div>
@@ -308,10 +311,10 @@ export default function ExpensesPage() {
                 <Receipt className="size-7 text-purple-600 dark:text-purple-400" />
               </div>
               <h2 className="mt-5 text-xl font-semibold tracking-tight">
-                No expense claims yet
+                {t("emptyTitle")}
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
-                Submit expenses and track them through approval to reimbursement.
+                {t("emptyDescription")}
               </p>
               <Button
                 onClick={() => openDrawer("expense")}
@@ -319,7 +322,7 @@ export default function ExpensesPage() {
                 className="mt-6 bg-emerald-600 hover:bg-emerald-700"
               >
                 <Plus className="mr-2 size-4" />
-                New Expense Claim
+                {t("newExpenseClaim")}
               </Button>
             </div>
           </div>
@@ -333,8 +336,8 @@ export default function ExpensesPage() {
       <div className="space-y-3 sm:space-y-6">
         {/* Header */}
         <PageHeader
-          title="Expenses"
-          description="Submit and manage expense claims through approval."
+          title={t("title")}
+          description={t("description")}
         >
           <Button
             size="sm"
@@ -342,14 +345,14 @@ export default function ExpensesPage() {
             className="bg-emerald-600 hover:bg-emerald-700"
           >
             <Plus className="mr-2 size-4" />
-            New Expense
+            {t("newExpense")}
           </Button>
         </PageHeader>
 
         {/* Stats strip */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-xs text-muted-foreground">{t("total")}</p>
             <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight">
               {formatMoney(totalAmount)}
             </p>
@@ -357,7 +360,7 @@ export default function ExpensesPage() {
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-blue-500" />
-              Pending
+              {t("pending")}
             </p>
             <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight text-blue-600 dark:text-blue-400">
               {formatMoney(pendingAmount)}
@@ -366,14 +369,14 @@ export default function ExpensesPage() {
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-emerald-500" />
-              Approved
+              {t("statuses.approved")}
             </p>
             <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
               {formatMoney(approvedAmount)}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Claims</p>
+            <p className="text-xs text-muted-foreground">{t("claims")}</p>
             <p className="text-lg sm:text-2xl font-bold tabular-nums tracking-tight">
               {countsData?.total || 0}
             </p>
@@ -387,19 +390,19 @@ export default function ExpensesPage() {
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
             <Tabs value={statusFilter} onValueChange={setStatusFilter}>
               <TabsList>
-                <TabsTrigger value="all" className="whitespace-nowrap">All ({countsData?.total || 0})</TabsTrigger>
-                <TabsTrigger value="draft" className="whitespace-nowrap">Draft ({statusCounts.draft || 0})</TabsTrigger>
-                <TabsTrigger value="submitted" className="whitespace-nowrap">Submitted ({statusCounts.submitted || 0})</TabsTrigger>
-                <TabsTrigger value="approved" className="whitespace-nowrap">Approved ({statusCounts.approved || 0})</TabsTrigger>
-                <TabsTrigger value="rejected" className="whitespace-nowrap">Rejected ({statusCounts.rejected || 0})</TabsTrigger>
-                <TabsTrigger value="paid" className="whitespace-nowrap">Paid ({statusCounts.paid || 0})</TabsTrigger>
+                <TabsTrigger value="all" className="whitespace-nowrap">{t("allCount", { count: countsData?.total || 0 })}</TabsTrigger>
+                <TabsTrigger value="draft" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.draft"), count: statusCounts.draft || 0 })}</TabsTrigger>
+                <TabsTrigger value="submitted" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.submitted"), count: statusCounts.submitted || 0 })}</TabsTrigger>
+                <TabsTrigger value="approved" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.approved"), count: statusCounts.approved || 0 })}</TabsTrigger>
+                <TabsTrigger value="rejected" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.rejected"), count: statusCounts.rejected || 0 })}</TabsTrigger>
+                <TabsTrigger value="paid" className="whitespace-nowrap">{t("statusCount", { status: t("statuses.paid"), count: statusCounts.paid || 0 })}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search expenses..."
+              placeholder={t("search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -409,20 +412,20 @@ export default function ExpensesPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">From</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t("from")}</span>
             <DatePicker
               value={dateFrom}
               onChange={(v) => setDateFrom(v)}
-              placeholder="Start date"
+              placeholder={t("startDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">To</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t("to")}</span>
             <DatePicker
               value={dateTo}
               onChange={(v) => setDateTo(v)}
-              placeholder="End date"
+              placeholder={t("endDate")}
               className="h-8 w-40 text-xs"
             />
           </div>
@@ -435,15 +438,15 @@ export default function ExpensesPage() {
             }}
           >
             <SelectTrigger className="h-8 w-44 text-xs">
-              <SelectValue placeholder="Sort by..." />
+              <SelectValue placeholder={t("sortBy")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="created:desc">Newest first</SelectItem>
-              <SelectItem value="created:asc">Oldest first</SelectItem>
-              <SelectItem value="total:desc">Highest amount</SelectItem>
-              <SelectItem value="total:asc">Lowest amount</SelectItem>
-              <SelectItem value="title:asc">Title (A-Z)</SelectItem>
-              <SelectItem value="title:desc">Title (Z-A)</SelectItem>
+              <SelectItem value="created:desc">{t("newestFirst")}</SelectItem>
+              <SelectItem value="created:asc">{t("oldestFirst")}</SelectItem>
+              <SelectItem value="total:desc">{t("highestAmount")}</SelectItem>
+              <SelectItem value="total:asc">{t("lowestAmount")}</SelectItem>
+              <SelectItem value="title:asc">{t("titleAsc")}</SelectItem>
+              <SelectItem value="title:desc">{t("titleDesc")}</SelectItem>
             </SelectContent>
           </Select>
           {hasFilters && (
@@ -457,7 +460,7 @@ export default function ExpensesPage() {
               }}
             >
               <X className="mr-1 size-3" />
-              Clear dates
+              {t("clearDates")}
             </Button>
           )}
         </div>
@@ -482,7 +485,7 @@ export default function ExpensesPage() {
                 columns={columns}
                 data={claims}
                 loading={loading}
-                emptyMessage="No expense claims match your filters."
+                emptyMessage={t("noClaimsMatch")}
                 onRowClick={(r) =>
                   router.push(`/purchases/expenses/${r.id}`)
                 }
