@@ -2231,6 +2231,29 @@
           "description": "Retirement & benefit amounts withheld"
         }
       }
+    },
+    "Forecasting": {
+      "pageTitle": "Payroll · Forecasting",
+      "title": "Forecasting",
+      "description": "Project future payroll costs and run what-if scenarios.",
+      "twelveMonthGross": "12-Month Gross",
+      "twelveMonthNet": "12-Month Net",
+      "headcount": "Headcount",
+      "month": "Month",
+      "gross": "Gross",
+      "net": "Net",
+      "whatIfAnalysis": "What-If Analysis",
+      "salaryAdjustment": "Salary Adjustment (%)",
+      "newHires": "New Hires",
+      "averageNewHireSalary": "Avg New Hire Salary",
+      "terminations": "Terminations",
+      "calculating": "Calculating...",
+      "runScenario": "Run Scenario",
+      "currentMonthly": "Current Monthly",
+      "employeesCount": "{count, plural, one {# employee} other {# employees}}",
+      "projectedMonthly": "Projected Monthly",
+      "difference": "Difference",
+      "perMonth": "per month"
     }
   }
 }
