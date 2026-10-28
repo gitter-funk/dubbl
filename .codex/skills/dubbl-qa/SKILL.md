@@ -11,7 +11,7 @@ Assess the change first, then run the smallest relevant verification set. Report
 
 - Run `npx tsc --noEmit` for TypeScript changes.
 - Run `npm run lint`; existing warnings may be reported, but new errors or warnings introduced by the change must be fixed or called out.
-- Run `npm test` when changing business logic covered by `tests/`, or add a focused regression test when a defect is fixed.
+- Run `npm test` for the unit suite and browser UI suite. The UI suite starts an ephemeral PostgreSQL database (using Docker when available, otherwise local PostgreSQL tools), applies migrations, loads demo data, and starts Next.js on port 3100; it never uses the developer's `.env` database. Docker or PostgreSQL server tools and the Playwright Chromium browser must be installed. Use `npm run test:unit` for a faster unit-only pass.
 - Use `git diff --check` before handoff.
 
 ## Change-specific checks
@@ -20,6 +20,6 @@ Assess the change first, then run the smallest relevant verification set. Report
 - For REST API changes, validate authentication, organization scoping, input validation, error status, and response shape using the surrounding route conventions.
 - For an MCP user-facing capability, verify there is a matching direct-Drizzle MCP tool in `lib/mcp/tools/`, registered in `lib/mcp/tools/index.ts`, wrapped with `wrapTool()`, scoped through `AuthContext`, and documented with `.describe()` on every Zod input field. Monetary values must remain integer cents.
 - For accounting, tax, currency, or payment behavior, check integer minor-unit handling, balanced journal entries where applicable, organization isolation, and boundary cases such as zero, negative, and non-2-decimal currencies.
-- For UI changes, inspect empty/loading/error states and keyboard/accessibility affordances in the changed component. Do not claim browser testing unless it actually occurred.
+- For UI changes, inspect empty/loading/error states and keyboard/accessibility affordances in the changed component. Add Playwright coverage for translated page rendering and responsive overflow where applicable. Do not claim browser testing unless it actually occurred.
 
-Do not modify unrelated files merely to clear existing lint warnings. Keep QA proportional: explain skipped checks when they would need unavailable credentials, a running service, or user authorization.
+Do not modify unrelated files merely to clear existing lint warnings. Keep QA proportional: explain skipped checks when they would need unavailable credentials, Docker, a running service, or user authorization.

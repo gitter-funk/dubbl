@@ -4,6 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  distDir: process.env.NEXT_DIST_DIR || ".next",
 };
 
 const withMDX = createMDX();

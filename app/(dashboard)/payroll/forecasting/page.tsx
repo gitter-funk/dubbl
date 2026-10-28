@@ -135,7 +135,7 @@ export default function ForecastingPage() {
       <div className="space-y-4">
         <h3 className="text-sm font-semibold">{t("whatIfAnalysis")}</h3>
         <div className="rounded-lg border p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-1">
               <Label className="text-xs">{t("salaryAdjustment")}</Label>
               <Input type="number" step="0.1" value={salaryAdj} onChange={(e) => setSalaryAdj(e.target.value)} className="h-8 text-sm" />
