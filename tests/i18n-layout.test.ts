@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { mergeMessages } from "../lib/i18n/merge-messages";
 
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 
@@ -11,9 +12,20 @@ function source(relativePath: string): string {
 }
 
 function message(locale: string, key: string): string {
-  const catalog = JSON.parse(
-    source(`messages/${locale}.json`),
-  ) as Record<string, unknown>;
+  let catalog = JSON.parse(source("messages/en.json")) as Record<string, unknown>;
+  if (locale.startsWith("fr")) {
+    catalog = mergeMessages(
+      catalog,
+      JSON.parse(source("messages/fr.json")) as Record<string, unknown>,
+    );
+  }
+  if (locale === "fr-CA") {
+    catalog = mergeMessages(
+      catalog,
+      JSON.parse(source("messages/fr-CA.json")) as Record<string, unknown>,
+    );
+  }
+
   let value: unknown = catalog;
   for (const part of key.split(".")) {
     value = (value as Record<string, unknown> | undefined)?.[part];
