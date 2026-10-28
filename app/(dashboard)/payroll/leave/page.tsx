@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { CalendarDays, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -44,7 +44,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function LeavePage() {
-  const router = useRouter();
+  const t = useTranslations("Payroll.LeaveRequests");
+  const locale = useLocale();
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -56,7 +57,7 @@ export default function LeavePage() {
   const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
   const [policies, setPolicies] = useState<{ id: string; name: string }[]>([]);
   const [form, setForm] = useState({ employeeId: "", policyId: "", startDate: "", endDate: "", hours: "", reason: "" });
-  useDocumentTitle("Payroll · Leave");
+  useDocumentTitle(t("pageTitle"));
 
   const orgId = typeof window !== "undefined" ? localStorage.getItem("activeOrgId") : null;
 
@@ -101,12 +102,12 @@ export default function LeavePage() {
         }),
       });
       if (res.ok) {
-        toast.success("Leave request created");
+        toast.success(t("requestCreated"));
         setDialogOpen(false);
         fetchData();
       }
     } catch {
-      toast.error("Failed to create request");
+      toast.error(t("createFailed"));
     } finally {
       setCreating(false);
     }
@@ -118,7 +119,7 @@ export default function LeavePage() {
       method: "POST",
       headers: { "x-organization-id": orgId },
     });
-    if (res.ok) { toast.success("Request approved"); fetchData(); }
+    if (res.ok) { toast.success(t("requestApproved")); fetchData(); }
   }
 
   async function handleReject(id: string) {
@@ -128,33 +129,33 @@ export default function LeavePage() {
       headers: { "Content-Type": "application/json", "x-organization-id": orgId },
       body: JSON.stringify({}),
     });
-    if (res.ok) { toast.success("Request rejected"); fetchData(); }
+    if (res.ok) { toast.success(t("requestRejected")); fetchData(); }
   }
 
   if (loading) return <BrandLoader />;
 
   return (
     <ContentReveal className="space-y-6">
-      <PageHeader title="Leave Management" description="Manage leave requests and PTO balances." />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
             <TabsList className="flex-wrap">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsTrigger value="all">{t("all")}</TabsTrigger>
+              <TabsTrigger value="pending">{t("statuses.pending")}</TabsTrigger>
+              <TabsTrigger value="approved">{t("statuses.approved")}</TabsTrigger>
+              <TabsTrigger value="rejected">{t("statuses.rejected")}</TabsTrigger>
             </TabsList>
           </Tabs>
           <Button size="sm" className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => setDialogOpen(true)}>
-            <Plus className="size-3" /> New Request
+            <Plus className="size-3" /> {t("newRequest")}
           </Button>
         </div>
 
         <div className="relative sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search by employee..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm" />
+          <Input placeholder={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm" />
         </div>
       </div>
 
@@ -163,27 +164,27 @@ export default function LeavePage() {
           <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted mb-3">
             <CalendarDays className="size-5 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium">No leave requests found</p>
+          <p className="text-sm font-medium">{t("noRequests")}</p>
         </div>
       ) : (
         <div className="rounded-xl border bg-card divide-y">
           {filtered.map((r) => (
             <div key={r.id} className="flex items-center justify-between gap-4 px-4 py-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{r.employee?.name || "Unknown"}</p>
+                <p className="text-sm font-medium truncate">{r.employee?.name || t("unknownEmployee")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {r.policy?.name || "-"} · {r.startDate} to {r.endDate} · {r.hours}h
+                  {r.policy?.name || "-"} · {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${r.startDate}T12:00:00Z`))} {t("to")} {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${r.endDate}T12:00:00Z`))} · {t("hours", { count: new Intl.NumberFormat(locale).format(r.hours) })}
                 </p>
                 {r.reason && <p className="text-xs text-muted-foreground mt-0.5">{r.reason}</p>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="outline" className={cn("text-[10px]", statusColors[r.status] || "")}>
-                  {r.status}
+                  {t(`statuses.${r.status}` as "statuses.pending" | "statuses.approved" | "statuses.rejected" | "statuses.cancelled")}
                 </Badge>
                 {r.status === "pending" && (
                   <>
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleApprove(r.id)}>Approve</Button>
-                    <Button size="sm" variant="outline" className="h-7 text-xs text-red-600" onClick={() => handleReject(r.id)}>Reject</Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleApprove(r.id)}>{t("approve")}</Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs text-red-600" onClick={() => handleReject(r.id)}>{t("reject")}</Button>
                   </>
                 )}
               </div>
@@ -194,43 +195,43 @@ export default function LeavePage() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>New Leave Request</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("newRequestTitle")}</DialogTitle></DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Employee</Label>
+              <Label>{t("employee")}</Label>
               <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })}>
-                <option value="">Select...</option>
+                <option value="">{t("select")}</option>
                 {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Policy</Label>
+              <Label>{t("policy")}</Label>
               <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={form.policyId} onChange={(e) => setForm({ ...form, policyId: e.target.value })}>
-                <option value="">Select...</option>
+                <option value="">{t("select")}</option>
                 {policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Start Date</Label>
+              <Label>{t("startDate")}</Label>
               <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>End Date</Label>
+              <Label>{t("endDate")}</Label>
               <Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Hours</Label>
+              <Label>{t("hoursLabel")}</Label>
               <Input type="number" step="0.5" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Reason</Label>
+              <Label>{t("reason")}</Label>
               <Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("cancel")}</Button>
             <Button onClick={handleCreate} disabled={creating} className="bg-emerald-600 hover:bg-emerald-700">
-              {creating ? "Creating..." : "Submit Request"}
+              {creating ? t("creating") : t("submitRequest")}
             </Button>
           </DialogFooter>
         </DialogContent>
