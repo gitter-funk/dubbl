@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Trash2, Users, Power, PowerOff } from "lucide-react";
@@ -97,6 +98,8 @@ function getPerPeriodPay(salary: number, frequency: string): number {
 }
 
 export default function EmployeeDetailPage() {
+  const t = useTranslations("Payroll.EmployeeDetails");
+  const locale = useLocale();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [emp, setEmp] = useState<EmployeeDetail | null>(null);
@@ -133,7 +136,7 @@ export default function EmployeeDetailPage() {
   const [compensationType, setCompensationType] = useState("salary");
   const [hourlyRate, setHourlyRate] = useState("");
   const [currency, setCurrency] = useState("USD");
-  useDocumentTitle("Payroll · Employee Details");
+  useDocumentTitle(t("pageTitle"));
 
   const orgId =
     typeof window !== "undefined"
@@ -238,13 +241,13 @@ export default function EmployeeDetailPage() {
       if (res.ok) {
         const data = await res.json();
         if (data.taxConfig) setTaxConfig(data.taxConfig);
-        toast.success("Tax configuration updated");
+        toast.success(t("taxConfigUpdated"));
       } else {
         const data = await res.json();
-        toast.error(typeof data.error === "string" ? data.error : "Failed to update tax config");
+        toast.error(typeof data.error === "string" ? data.error : t("taxConfigUpdateFailed"));
       }
     } catch {
-      toast.error("Failed to update tax configuration");
+      toast.error(t("taxConfigUpdateFailed"));
     } finally {
       setTaxSaving(false);
     }
@@ -278,13 +281,13 @@ export default function EmployeeDetailPage() {
       if (res.ok) {
         const data = await res.json();
         setEmp(data.employee);
-        toast.success("Employee updated");
+        toast.success(t("employeeUpdated"));
       } else {
         const data = await res.json();
-        toast.error(typeof data.error === "string" ? data.error : "Failed to update");
+        toast.error(typeof data.error === "string" ? data.error : t("updateFailed"));
       }
     } catch {
-      toast.error("Failed to update employee");
+      toast.error(t("employeeUpdateFailed"));
     } finally {
       setSaving(false);
     }
@@ -293,9 +296,9 @@ export default function EmployeeDetailPage() {
   async function handleDelete() {
     if (!orgId) return;
     const confirmed = await confirm({
-      title: "Delete this employee?",
-      description: "This action cannot be undone.",
-      confirmLabel: "Delete",
+      title: t("deleteConfirmTitle"),
+      description: t("deleteConfirmDescription"),
+      confirmLabel: t("delete"),
       destructive: true,
     });
     if (!confirmed) return;
@@ -304,10 +307,10 @@ export default function EmployeeDetailPage() {
       headers: { "x-organization-id": orgId },
     });
     if (res.ok) {
-      toast.success("Employee deleted");
+      toast.success(t("employeeDeleted"));
       router.push("/payroll/employees");
     } else {
-      toast.error("Failed to delete employee");
+      toast.error(t("employeeDeleteFailed"));
     }
   }
 
@@ -321,9 +324,9 @@ export default function EmployeeDetailPage() {
           className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="size-3.5" />
-          Back to employees
+          {t("backToEmployees")}
         </button>
-        <p className="text-sm text-muted-foreground">Employee not found</p>
+        <p className="text-sm text-muted-foreground">{t("employeeNotFound")}</p>
       </ContentReveal>
     );
   }
@@ -339,7 +342,7 @@ export default function EmployeeDetailPage() {
         className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="size-3.5" />
-        Back to employees
+        {t("backToEmployees")}
       </button>
 
       {/* Header */}
@@ -366,7 +369,7 @@ export default function EmployeeDetailPage() {
                   ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                   : ""
               }>
-                {isActive ? "Active" : "Inactive"}
+                {isActive ? t("active") : t("inactive")}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -374,7 +377,7 @@ export default function EmployeeDetailPage() {
             </p>
             {emp.member && (
               <p className="text-xs text-muted-foreground">
-                Linked to {emp.member.user.name || emp.member.user.email}
+                {t("linkedTo", { name: emp.member.user.name || emp.member.user.email })}
               </p>
             )}
           </div>
@@ -382,9 +385,9 @@ export default function EmployeeDetailPage() {
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setIsActive(!isActive)}>
             {isActive ? (
-              <><PowerOff className="mr-1.5 size-3.5" />Deactivate</>
+              <><PowerOff className="mr-1.5 size-3.5" />{t("deactivate")}</>
             ) : (
-              <><Power className="mr-1.5 size-3.5" />Activate</>
+              <><Power className="mr-1.5 size-3.5" />{t("activate")}</>
             )}
           </Button>
         </div>
@@ -394,41 +397,41 @@ export default function EmployeeDetailPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <motion.div {...anim(0)} className="rounded-xl border bg-card p-4">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {compensationType === "salary" ? "Annual Salary" : compensationType === "hourly" ? "Hourly Rate" : "Compensation"}
+            {compensationType === "salary" ? t("annualSalary") : compensationType === "hourly" ? t("hourlyRate") : t("compensation")}
           </p>
           <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">
             {compensationType === "salary"
-              ? formatMoney(salaryInCents)
+              ? formatMoney(salaryInCents, currency, locale)
               : compensationType === "hourly"
-                ? formatMoney(Math.round(parseFloat(hourlyRate || "0") * 100))
+                ? formatMoney(Math.round(parseFloat(hourlyRate || "0") * 100), currency, locale)
                 : "-"}
           </p>
         </motion.div>
         <motion.div {...anim(0.05)} className="rounded-xl border bg-card p-4">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Per-Period Pay</p>
-          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">{formatMoney(getPerPeriodPay(salaryInCents, payFrequency))}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("perPeriodPay")}</p>
+          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">{formatMoney(getPerPeriodPay(salaryInCents, payFrequency), currency, locale)}</p>
         </motion.div>
         <motion.div {...anim(0.09)} className="rounded-xl border bg-card p-4">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Tax Rate</p>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("taxRate")}</p>
           <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">{taxRateNum}%</p>
         </motion.div>
         <motion.div {...anim(0.12)} className="rounded-xl border bg-card p-4">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Compensation Type</p>
-          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">{compensationType.charAt(0).toUpperCase() + compensationType.slice(1)}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("compensationType")}</p>
+          <p className="mt-1 text-2xl font-bold font-mono tabular-nums truncate">{t(`compensationTypes.${compensationType}` as "compensationTypes.salary" | "compensationTypes.hourly" | "compensationTypes.milestone" | "compensationTypes.commission")}</p>
         </motion.div>
       </div>
 
       {/* Edit form */}
       <div className="max-w-4xl space-y-6">
         {/* Personal Info */}
-        <Section title="Personal Info" description="Basic employee information.">
+        <Section title={t("personalInfo")} description={t("personalInfoDescription")}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-xs">Full Name</Label>
+              <Label className="text-xs">{t("fullName")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Email</Label>
+              <Label className="text-xs">{t("email")}</Label>
               <Input
                 type="email"
                 value={email}
@@ -436,7 +439,7 @@ export default function EmployeeDetailPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Employee #</Label>
+              <Label className="text-xs">{t("employeeNumber")}</Label>
               <Input
                 value={employeeNumber}
                 onChange={(e) => setEmployeeNumber(e.target.value)}
@@ -444,7 +447,7 @@ export default function EmployeeDetailPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Position</Label>
+              <Label className="text-xs">{t("position")}</Label>
               <Input
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
@@ -456,22 +459,22 @@ export default function EmployeeDetailPage() {
         <div className="h-px bg-border" />
 
         {/* Compensation */}
-        <Section title="Compensation" description="Salary, pay frequency, and tax configuration.">
+        <Section title={t("compensation")} description={t("compensationDescription")}>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Compensation Type</Label>
+              <Label className="text-xs">{t("compensationType")}</Label>
               <Select value={compensationType} onValueChange={setCompensationType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="salary">Salary</SelectItem>
-                  <SelectItem value="hourly">Hourly</SelectItem>
-                  <SelectItem value="milestone">Milestone</SelectItem>
-                  <SelectItem value="commission">Commission</SelectItem>
+                  <SelectItem value="salary">{t("compensationTypes.salary")}</SelectItem>
+                  <SelectItem value="hourly">{t("compensationTypes.hourly")}</SelectItem>
+                  <SelectItem value="milestone">{t("compensationTypes.milestone")}</SelectItem>
+                  <SelectItem value="commission">{t("compensationTypes.commission")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Annual Salary</Label>
+              <Label className="text-xs">{t("annualSalary")}</Label>
               <CurrencyInput
                 prefix="$"
                 value={salary}
@@ -479,20 +482,20 @@ export default function EmployeeDetailPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Pay Frequency</Label>
+              <Label className="text-xs">{t("payFrequency")}</Label>
               <Select value={payFrequency} onValueChange={setPayFrequency}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="biweekly">Biweekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="weekly">{t("frequencies.weekly")}</SelectItem>
+                  <SelectItem value="biweekly">{t("frequencies.biweekly")}</SelectItem>
+                  <SelectItem value="monthly">{t("frequencies.monthly")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Tax Rate (%)</Label>
+              <Label className="text-xs">{t("taxRatePercent")}</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -502,12 +505,12 @@ export default function EmployeeDetailPage() {
             </div>
             {compensationType === "hourly" && (
               <div className="space-y-1.5">
-                <Label className="text-xs">Hourly Rate</Label>
+                <Label className="text-xs">{t("hourlyRate")}</Label>
                 <CurrencyInput prefix="$" value={hourlyRate} onChange={setHourlyRate} />
               </div>
             )}
             <div className="space-y-1.5">
-              <Label className="text-xs">Currency</Label>
+              <Label className="text-xs">{t("currency")}</Label>
               <CurrencySelect value={currency} onValueChange={setCurrency} />
             </div>
           </div>
@@ -516,17 +519,17 @@ export default function EmployeeDetailPage() {
         <div className="h-px bg-border" />
 
         {/* Details */}
-        <Section title="Details" description="Banking and employment dates.">
+        <Section title={t("details")} description={t("detailsDescription")}>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Bank Account Number</Label>
+              <Label className="text-xs">{t("bankAccountNumber")}</Label>
               <Input
                 value={bankAccountNumber}
                 onChange={(e) => setBankAccountNumber(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Start Date</Label>
+              <Label className="text-xs">{t("startDate")}</Label>
               <Input
                 type="date"
                 value={startDate}
@@ -535,7 +538,7 @@ export default function EmployeeDetailPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">End Date</Label>
+              <Label className="text-xs">{t("endDate")}</Label>
               <Input
                 type="date"
                 value={endDate}
@@ -549,9 +552,9 @@ export default function EmployeeDetailPage() {
         <div className="h-px bg-border" />
 
         {/* Deductions */}
-        <Section title="Deductions" description="Assigned deductions for this employee. Manage deduction types in settings.">
+        <Section title={t("deductions")} description={t("deductionsDescription")}>
           {deductions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No deductions assigned.</p>
+            <p className="text-sm text-muted-foreground">{t("noDeductions")}</p>
           ) : (
             <div className="space-y-2">
               {deductions.map((d) => (
@@ -575,14 +578,14 @@ export default function EmployeeDetailPage() {
                               : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
                           )}
                         >
-                          {d.deductionType.timing === "pre_tax" ? "Pre-tax" : "Post-tax"}
+                          {d.deductionType.timing === "pre_tax" ? t("preTax") : t("postTax")}
                         </Badge>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-mono tabular-nums">
-                      {d.isPercentage ? `${d.amount}%` : formatMoney(d.amount)}
+                      {d.isPercentage ? `${d.amount}%` : formatMoney(d.amount, currency, locale)}
                     </span>
                     <Badge
                       variant="outline"
@@ -593,7 +596,7 @@ export default function EmployeeDetailPage() {
                           : ""
                       )}
                     >
-                      {d.isActive ? "Active" : "Inactive"}
+                      {d.isActive ? t("active") : t("inactive")}
                     </Badge>
                   </div>
                 </div>
@@ -605,26 +608,26 @@ export default function EmployeeDetailPage() {
         <div className="h-px bg-border" />
 
         {/* Tax Configuration */}
-        <Section title="Tax Configuration" description="Federal and state tax withholding settings.">
+        <Section title={t("taxConfiguration")} description={t("taxConfigurationDescription")}>
           {!taxConfig ? (
-            <p className="text-sm text-muted-foreground">No tax configuration found.</p>
+            <p className="text-sm text-muted-foreground">{t("noTaxConfiguration")}</p>
           ) : (
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Filing Status</Label>
+                  <Label className="text-xs">{t("filingStatus")}</Label>
                   <Select value={tcFilingStatus} onValueChange={setTcFilingStatus}>
-                    <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("selectStatus")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married_filing_jointly">Married Filing Jointly</SelectItem>
-                      <SelectItem value="married_filing_separately">Married Filing Separately</SelectItem>
-                      <SelectItem value="head_of_household">Head of Household</SelectItem>
+                      <SelectItem value="single">{t("filingStatuses.single")}</SelectItem>
+                      <SelectItem value="married_filing_jointly">{t("filingStatuses.marriedFilingJointly")}</SelectItem>
+                      <SelectItem value="married_filing_separately">{t("filingStatuses.marriedFilingSeparately")}</SelectItem>
+                      <SelectItem value="head_of_household">{t("filingStatuses.headOfHousehold")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Federal Allowances</Label>
+                  <Label className="text-xs">{t("federalAllowances")}</Label>
                   <Input
                     type="number"
                     value={tcFederalAllowances}
@@ -632,7 +635,7 @@ export default function EmployeeDetailPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">State Allowances</Label>
+                  <Label className="text-xs">{t("stateAllowances")}</Label>
                   <Input
                     type="number"
                     value={tcStateAllowances}
@@ -640,7 +643,7 @@ export default function EmployeeDetailPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Additional Federal Withholding</Label>
+                  <Label className="text-xs">{t("additionalFederalWithholding")}</Label>
                   <CurrencyInput
                     prefix="$"
                     value={tcAddlFederal}
@@ -648,7 +651,7 @@ export default function EmployeeDetailPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Additional State Withholding</Label>
+                  <Label className="text-xs">{t("additionalStateWithholding")}</Label>
                   <CurrencyInput
                     prefix="$"
                     value={tcAddlState}
@@ -664,7 +667,7 @@ export default function EmployeeDetailPage() {
                   className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <Save className="mr-1.5 size-3.5" />
-                  {taxSaving ? "Saving..." : "Save Tax Config"}
+                  {taxSaving ? t("saving") : t("saveTaxConfig")}
                 </Button>
               </div>
             </div>
@@ -674,9 +677,9 @@ export default function EmployeeDetailPage() {
         <div className="h-px bg-border" />
 
         {/* Leave Balances */}
-        <Section title="Leave Balances" description="Current leave balance and usage for assigned policies.">
+        <Section title={t("leaveBalances")} description={t("leaveBalancesDescription")}>
           {leaveBalances.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No leave balances found.</p>
+            <p className="text-sm text-muted-foreground">{t("noLeaveBalances")}</p>
           ) : (
             <div className="space-y-2">
               {leaveBalances.map((lb) => (
@@ -696,12 +699,12 @@ export default function EmployeeDetailPage() {
                   </div>
                   <div className="flex items-center gap-4 text-sm font-mono tabular-nums">
                     <div className="text-right">
-                      <p className="text-[11px] font-sans text-muted-foreground">Balance</p>
-                      <p>{lb.balance}h</p>
+                      <p className="text-[11px] font-sans text-muted-foreground">{t("balance")}</p>
+                      <p>{t("hours", { count: lb.balance })}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[11px] font-sans text-muted-foreground">Used</p>
-                      <p>{lb.usedHours}h</p>
+                      <p className="text-[11px] font-sans text-muted-foreground">{t("used")}</p>
+                      <p>{t("hours", { count: lb.usedHours })}</p>
                     </div>
                   </div>
                 </div>
@@ -715,30 +718,30 @@ export default function EmployeeDetailPage() {
           <>
             <div className="h-px bg-border" />
 
-            <Section title="Compensation Band" description="Salary band positioning for this employee.">
+            <Section title={t("compensationBand")} description={t("compensationBandDescription")}>
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="space-y-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Band</p>
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("band")}</p>
                     <p className="text-sm font-medium">{compensationBand.name}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Min Salary</p>
-                    <p className="text-sm font-mono tabular-nums">{formatMoney(compensationBand.minSalary)}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("minSalary")}</p>
+                    <p className="text-sm font-mono tabular-nums">{formatMoney(compensationBand.minSalary, currency, locale)}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Mid Salary</p>
-                    <p className="text-sm font-mono tabular-nums">{formatMoney(compensationBand.midSalary)}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("midSalary")}</p>
+                    <p className="text-sm font-mono tabular-nums">{formatMoney(compensationBand.midSalary, currency, locale)}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Max Salary</p>
-                    <p className="text-sm font-mono tabular-nums">{formatMoney(compensationBand.maxSalary)}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("maxSalary")}</p>
+                    <p className="text-sm font-mono tabular-nums">{formatMoney(compensationBand.maxSalary, currency, locale)}</p>
                   </div>
                 </div>
                 {compensationBand.maxSalary > compensationBand.minSalary && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Range Penetration</span>
+                      <span>{t("rangePenetration")}</span>
                       <span className="font-mono tabular-nums">
                         {Math.min(
                           100,
@@ -790,19 +793,19 @@ export default function EmployeeDetailPage() {
             className="bg-emerald-600 hover:bg-emerald-700"
           >
             <Save className="mr-1.5 size-3.5" />
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t("saving") : t("saveChanges")}
           </Button>
         </div>
 
         <div className="h-px bg-border" />
 
         {/* Danger zone */}
-        <Section title="Danger zone" description="Irreversible actions for this employee.">
+        <Section title={t("dangerZone")} description={t("dangerZoneDescription")}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/20">
             <div>
-              <p className="text-sm font-medium text-red-600 dark:text-red-400">Delete employee</p>
+              <p className="text-sm font-medium text-red-600 dark:text-red-400">{t("deleteEmployee")}</p>
               <p className="text-[12px] text-muted-foreground">
-                Permanently delete this employee and all associated data.
+                {t("deleteEmployeeDescription")}
               </p>
             </div>
             <Button
@@ -811,7 +814,7 @@ export default function EmployeeDetailPage() {
               onClick={handleDelete}
             >
               <Trash2 className="mr-1.5 size-3.5" />
-              Delete
+              {t("delete")}
             </Button>
           </div>
         </Section>
