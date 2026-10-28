@@ -65,7 +65,7 @@
     "requisitions": "Pedidos de compra",
     "transactions": "Transações",
     "accounts": "Contas",
-    "banking": "Banco",
+    "banking": "Bancos",
     "fixed-assets": "Ativos fixos",
     "budgets": "Orçamentos",
     "reconcile": "Reconciliação",
@@ -116,10 +116,9 @@
     "bom": "Lista de Materiais",
     "assembly": "Pedidos de Montagem",
     "variants": "Variantes",
-    "landed-costs": "Custos de Aterragem",
+    "landed-costs": "Custos de importação",
     "search": "Procurar...",
-    "newProject": "Novo projeto",
-    "land-costs": "Custos de importação"
+    "newProject": "Novo projeto"
   },
   "Common": {
     "noResultsFound": "Nenhum resultado encontrado.",
